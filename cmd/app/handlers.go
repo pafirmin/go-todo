@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"runtime/debug"
+
+	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
 )
 
 func (app *application) getTasks(w http.ResponseWriter, r *http.Request) {
@@ -28,37 +28,23 @@ func (app *application) deleteTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
-	type createUserDTO struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-
-	dto := &createUserDTO{}
+	dto := &postgres.CreateUserDTO{}
 
 	err := json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-		app.errorLog.Output(2, trace)
-
-		http.Error(w, http.StatusText(500), 500)
+		app.serverError(w, err)
 		return
 	}
 
-	u, err := app.users.Insert(dto.Email, dto.Password)
+	u, err := app.users.Insert(dto)
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-		app.errorLog.Output(2, trace)
-		http.Error(w, http.StatusText(500), 500)
+		app.serverError(w, err)
 		return
 	}
 
-	u.HashedPassword = ""
 	jsonRsp, err := json.Marshal(u)
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-		app.errorLog.Output(2, trace)
-
-		http.Error(w, http.StatusText(500), 500)
+		app.serverError(w, err)
 		return
 	}
 
