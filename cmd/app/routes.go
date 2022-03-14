@@ -8,6 +8,7 @@ import (
 
 func (app *application) routes() http.Handler {
 	router := mux.NewRouter()
+	router.HandleFunc("/auth/login", app.login).Methods("POST")
 
 	router.HandleFunc("/users", app.createUser).Methods("POST")
 	router.HandleFunc("/users/{id:[0-9]+}", app.getUser).Methods("GET")

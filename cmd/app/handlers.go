@@ -5,8 +5,10 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/pafirmin/do-daily-go/pkg/jwt"
 	"github.com/pafirmin/do-daily-go/pkg/models"
 	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
 )
@@ -29,6 +31,31 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) deleteTask(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Delete a task"))
+}
+
+func (app *application) login(w http.ResponseWriter, r *http.Request) {
+	creds := &postgres.Credentials{}
+
+	err := json.NewDecoder(r.Body).Decode(creds)
+	if err != nil {
+		app.clientError(w, http.StatusUnauthorized)
+		return
+	}
+
+	id, err := app.users.Authenticate(creds)
+	if err != nil {
+		app.clientError(w, http.StatusUnauthorized)
+		return
+	}
+
+	exp := time.Now().Add(24 * time.Hour)
+	token, err := jwt.Sign(id, creds.Email, exp)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	w.Write([]byte(token))
 }
 
 func (app *application) getUser(w http.ResponseWriter, r *http.Request) {
