@@ -10,6 +10,7 @@ func (app *application) routes() http.Handler {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/users", app.createUser).Methods("POST")
+	router.HandleFunc("/users/{id:[0-9]+}", app.getUser).Methods("GET")
 
 	router.HandleFunc("/tasks", app.getTasks).Methods("GET")
 	router.HandleFunc("/tasks/{id:[0-9]+}", app.getOneTask).Methods("GET")
