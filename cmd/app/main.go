@@ -9,19 +9,44 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/pafirmin/do-daily-go/pkg/jwt"
+	"github.com/pafirmin/do-daily-go/pkg/models"
 	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
 )
 
+type usersService interface {
+	Insert(*postgres.CreateUserDTO) (*models.User, error)
+	Get(int) (*models.User, error)
+	Authenticate(*postgres.Credentials) (int, error)
+}
+
+type foldersService interface {
+	Insert(*postgres.CreateFolderDTO) (*models.Folder, error)
+	Get(int) (*models.Folder, error)
+}
+
+type tasksService interface {
+	Insert(*postgres.CreateTaskDTO) (*models.Task, error)
+	GetByFolder(int) ([]*models.Task, error)
+}
+
+type jwtService interface {
+	Sign(int, string, time.Time) (string, error)
+	Parse(string) (*jwt.UserClaims, error)
+}
+
 type application struct {
-	errorLog *log.Logger
-	folders  *postgres.FolderModel
-	infoLog  *log.Logger
-	tasks    *postgres.TaskModel
-	users    *postgres.UserModel
+	errorLog   *log.Logger
+	folders    foldersService
+	infoLog    *log.Logger
+	jwtService jwtService
+	tasks      tasksService
+	users      usersService
 }
 
 func main() {
 	port := os.Getenv("PORT")
+	secret := os.Getenv("SECRET")
 	dsn := "postgresql://postgres@localhost:5432/dodaily?sslmode=disable"
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
@@ -35,11 +60,12 @@ func main() {
 	defer db.Close()
 
 	app := &application{
-		errorLog: errorLog,
-		folders:  &postgres.FolderModel{DB: db},
-		infoLog:  infoLog,
-		tasks:    &postgres.TaskModel{DB: db},
-		users:    &postgres.UserModel{DB: db},
+		errorLog:   errorLog,
+		folders:    &postgres.FolderModel{DB: db},
+		infoLog:    infoLog,
+		jwtService: jwt.NewJWTService(secret),
+		tasks:      &postgres.TaskModel{DB: db},
+		users:      &postgres.UserModel{DB: db},
 	}
 
 	srv := &http.Server{

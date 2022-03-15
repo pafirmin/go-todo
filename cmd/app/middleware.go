@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/pafirmin/do-daily-go/pkg/jwt"
 )
 
 type contextKey string
@@ -52,7 +50,7 @@ func (app *application) requireAuth(next http.Handler) http.Handler {
 		}
 
 		token := authHeader[1]
-		claims, err := jwt.Parse(token)
+		claims, err := app.jwtService.Parse(token)
 		if err != nil {
 			app.unauthorized(w)
 			return

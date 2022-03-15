@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS "folders" (
 CREATE TABLE IF NOT EXISTS "tasks" (
   "id" serial PRIMARY KEY,
   "title" VARCHAR ( 255 ) NOT NULL,
-  "description" TEXT NOT NULL,
+  "description" TEXT,
   "priority" VARCHAR NOT NULL CHECK(description IN ('low', 'medium', 'high')) DEFAULT ('low'),
   "due" TIMESTAMP,
   "complete" BOOLEAN NOT NULL DEFAULT (false),

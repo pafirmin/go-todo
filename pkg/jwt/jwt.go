@@ -2,11 +2,14 @@ package jwt
 
 import (
 	"errors"
-	"os"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 )
+
+type JWTService struct {
+	Secret string
+}
 
 type UserClaims struct {
 	Email  string `json:"email"`
@@ -15,12 +18,17 @@ type UserClaims struct {
 }
 
 var (
-	secret                  = []byte(os.Getenv("SECRET"))
 	ErrInvalidSigningMethod = errors.New("jwt: invalid signing method")
 	ErrNoUser               = errors.New("jwt: could not parse user data from token")
 )
 
-func Sign(id int, email string, expires time.Time) (string, error) {
+func NewJWTService(secret string) *JWTService {
+	return &JWTService{
+		Secret: secret,
+	}
+}
+
+func (j *JWTService) Sign(id int, email string, expires time.Time) (string, error) {
 	claims := &UserClaims{
 		Email:  email,
 		UserID: id,
@@ -30,7 +38,7 @@ func Sign(id int, email string, expires time.Time) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ret, err := token.SignedString(secret)
+	ret, err := token.SignedString(j.Secret)
 	if err != nil {
 		return "", err
 	}
@@ -38,12 +46,12 @@ func Sign(id int, email string, expires time.Time) (string, error) {
 	return ret, nil
 }
 
-func Parse(tokenStr string) (*UserClaims, error) {
+func (j *JWTService) Parse(tokenStr string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidSigningMethod
 		}
-		return []byte(secret), nil
+		return []byte(j.Secret), nil
 	})
 
 	if claims, ok := token.Claims.(*UserClaims); ok && token.Valid {

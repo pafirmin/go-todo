@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/pafirmin/do-daily-go/pkg/jwt"
 	"github.com/pafirmin/do-daily-go/pkg/models"
 	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
 )
@@ -194,7 +193,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	exp := time.Now().Add(24 * time.Hour)
-	token, err := jwt.Sign(id, creds.Email, exp)
+	token, err := app.jwtService.Sign(id, creds.Email, exp)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -237,7 +236,6 @@ func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonRsp)
 }
 
