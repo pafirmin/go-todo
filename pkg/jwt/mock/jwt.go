@@ -12,7 +12,7 @@ type JWTService struct {
 }
 
 func (j *JWTService) Parse(tokenStr string) (*jwt.UserClaims, error) {
-	if tokenStr == "" {
+	if tokenStr == "invalid" {
 		return nil, errors.New("Invalid token")
 	}
 
@@ -21,6 +21,12 @@ func (j *JWTService) Parse(tokenStr string) (*jwt.UserClaims, error) {
 		Email:  "test@example.com",
 	}
 	claims.ExpiresAt = time.Now().Add(24 * time.Hour).UnixMicro()
+	claims.Email = "test@example.com"
+	if tokenStr == "123" {
+		claims.UserID = 1
+	} else {
+		claims.UserID = 2
+	}
 
 	return &claims, nil
 }

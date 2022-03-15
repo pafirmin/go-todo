@@ -23,14 +23,13 @@ func newTestApplication(t *testing.T) *application {
 	}
 }
 
-func requestPerformer(r http.Handler, method string, t *testing.T) func(string) *httptest.ResponseRecorder {
-	return func(path string) *httptest.ResponseRecorder {
+func requestPerformer(r http.Handler, method string, t *testing.T) func(string, string) *httptest.ResponseRecorder {
+	return func(path string, token string) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(method, path, nil)
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", "123"))
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
 		r.ServeHTTP(w, req)
 
 		return w
-
 	}
 }
