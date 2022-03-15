@@ -16,6 +16,7 @@ type application struct {
 	errorLog *log.Logger
 	folders  *postgres.FolderModel
 	infoLog  *log.Logger
+	tasks    *postgres.TaskModel
 	users    *postgres.UserModel
 }
 
@@ -37,6 +38,7 @@ func main() {
 		errorLog: errorLog,
 		folders:  &postgres.FolderModel{DB: db},
 		infoLog:  infoLog,
+		tasks:    &postgres.TaskModel{DB: db},
 		users:    &postgres.UserModel{DB: db},
 	}
 

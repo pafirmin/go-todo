@@ -32,9 +32,8 @@ func (m *UserModel) Get(id int) (*models.User, error) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, models.ErrNoRecord
-		} else {
-			return nil, err
 		}
+		return nil, err
 	}
 	return u, nil
 }

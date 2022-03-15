@@ -16,6 +16,15 @@ const ctxKeyUserClaims = contextKey("user")
 func defaultHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Frame-Options", "deny")
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) logRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		app.infoLog.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
 
 		next.ServeHTTP(w, r)
 	})
@@ -38,14 +47,14 @@ func (app *application) requireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
 		if len(authHeader) != 2 {
-			app.clientError(w, http.StatusUnauthorized)
+			app.unauthorized(w)
 			return
 		}
 
 		token := authHeader[1]
 		claims, err := jwt.Parse(token)
 		if err != nil {
-			app.clientError(w, http.StatusUnauthorized)
+			app.unauthorized(w)
 			return
 		}
 

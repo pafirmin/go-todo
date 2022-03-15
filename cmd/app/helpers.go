@@ -28,9 +28,16 @@ func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
 }
 
+func (app *application) unauthorized(w http.ResponseWriter) {
+	app.clientError(w, http.StatusUnauthorized)
+}
+
+func (app *application) forbidden(w http.ResponseWriter) {
+	app.clientError(w, http.StatusForbidden)
+}
+
 func (app *application) ctxClaims(ctx context.Context) (*jwt.UserClaims, error) {
 	claims, ok := ctx.Value(ctxKeyUserClaims).(*jwt.UserClaims)
-	fmt.Println(claims)
 
 	if ok {
 		return claims, nil
