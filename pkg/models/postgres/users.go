@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/pafirmin/do-daily-go/pkg/models"
 	"golang.org/x/crypto/bcrypt"
@@ -49,8 +48,6 @@ func (m *UserModel) Insert(dto *CreateUserDTO) (*models.User, error) {
 	stmt := `INSERT INTO users (email, hashed_password, created)
 	VALUES($1, $2, now())
 	RETURNING *`
-
-	fmt.Println(dto.Email, string(hashedPassword))
 
 	u := &models.User{}
 

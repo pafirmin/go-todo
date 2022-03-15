@@ -13,23 +13,23 @@ import (
 	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
 )
 
-func (app *application) getTasks(w http.ResponseWriter, r *http.Request) {
+func (app *application) getFolders(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Get all tasks"))
 }
 
-func (app *application) getOneTask(w http.ResponseWriter, r *http.Request) {
+func (app *application) getOneFolder(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Get one task"))
 }
 
-func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
+func (app *application) createFolder(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Create a task"))
 }
 
-func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
+func (app *application) updateFolder(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Update a task"))
 }
 
-func (app *application) deleteTask(w http.ResponseWriter, r *http.Request) {
+func (app *application) deleteFolder(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Delete a task"))
 }
 
