@@ -20,7 +20,7 @@ var mockTask = &models.Task{
 
 type TaskModel struct{}
 
-func (t *TaskModel) Insert(dto *postgres.CreateTaskDTO) (*models.Task, error) {
+func (t *TaskModel) Insert(id int, dto *postgres.CreateTaskDTO) (*models.Task, error) {
 	return mockTask, nil
 }
 
@@ -29,7 +29,12 @@ func (t *TaskModel) GetByFolder(id int) ([]*models.Task, error) {
 }
 
 func (t *TaskModel) GetByID(id int) (*models.Task, error) {
-	return mockTask, nil
+	switch id {
+	case 1:
+		return mockTask, nil
+	default:
+		return nil, models.ErrNoRecord
+	}
 }
 
 func (t *TaskModel) Delete(id int) (int, error) {

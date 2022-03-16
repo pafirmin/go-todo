@@ -109,7 +109,39 @@ func (app *application) updateFolder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) removeFolder(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Delete a folder"))
+	claims, ok := app.claimsFromContext(r.Context())
+	if !ok || claims.UserID < 1 {
+		app.unauthorized(w)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	f, err := app.folders.GetByID(id)
+	if errors.Is(err, models.ErrNoRecord) {
+		app.notFound(w)
+		return
+	} else if err != nil {
+		app.serverError(w, err)
+		return
+	} else if f.UserID != claims.UserID {
+		app.forbidden(w)
+		return
+	}
+
+	_, err = app.folders.Delete(id)
+
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request) {
@@ -218,6 +250,18 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	dto := &postgres.CreateTaskDTO{}
+	err = json.NewDecoder(r.Body).Decode(dto)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	if err := app.validator.Struct(dto); err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
 	f, err := app.folders.GetByID(id)
 	if errors.Is(err, models.ErrNoRecord) {
 		app.notFound(w)
@@ -230,23 +274,12 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto := &postgres.CreateTaskDTO{FolderID: id}
-	err = json.NewDecoder(r.Body).Decode(dto)
+	t, err := app.tasks.Insert(f.ID, dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	if err := app.validator.Struct(dto); err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
-
-	t, err := app.tasks.Insert(dto)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
 	jsonRsp, err := json.Marshal(t)
 	if err != nil {
 		app.serverError(w, err)

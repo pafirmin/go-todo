@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/pafirmin/go-todo/pkg/models"
 )
@@ -13,21 +12,20 @@ type TaskModel struct {
 }
 
 type CreateTaskDTO struct {
-	Title       string    `json:"title" validate:"required,min=1,max=30"`
-	Description string    `json:"description"`
-	Priority    string    `json:"priority"`
-	Due         time.Time `json:"due" validate:"required,datetime"`
-	FolderID    int       `json:"folderId"`
+	Title       string `json:"title" validate:"required,min=1,max=30"`
+	Description string `json:"description"`
+	Priority    string `json:"priority"`
+	Due         string `json:"due" validate:"required"`
 }
 
-func (m *TaskModel) Insert(dto *CreateTaskDTO) (*models.Task, error) {
+func (m *TaskModel) Insert(folderID int, dto *CreateTaskDTO) (*models.Task, error) {
 	stmt := `INSERT INTO tasks (title, description, priority, due, complete, created, folder_id)
 	VALUES ($1, $2, $3, $4, DEFAULT, DEFAULT, $5)
 	RETURNING *`
 
 	t := &models.Task{}
 
-	row := m.DB.QueryRow(stmt, dto.Title, dto.Description, dto.Priority, dto.Due, dto.FolderID)
+	row := m.DB.QueryRow(stmt, dto.Title, dto.Description, dto.Priority, dto.Due, folderID)
 	err := row.Scan(
 		&t.ID,
 		&t.Title,

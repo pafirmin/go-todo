@@ -26,21 +26,10 @@ func newTestApplication(t *testing.T) *application {
 	}
 }
 
-func getRequest(r http.Handler, t *testing.T) func(string, string) *httptest.ResponseRecorder {
-	return func(path string, token string) *httptest.ResponseRecorder {
+func getRequestMaker(r http.Handler, method string, t *testing.T) func(string, string, string) *httptest.ResponseRecorder {
+	return func(path, body, token string) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", path, nil)
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
-		r.ServeHTTP(w, req)
-
-		return w
-	}
-}
-
-func postRequest(r http.Handler, t *testing.T) func(string, string, string) *httptest.ResponseRecorder {
-	return func(path string, body, token string) *httptest.ResponseRecorder {
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", path, strings.NewReader(body))
+		req, _ := http.NewRequest(method, path, strings.NewReader(body))
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
 		r.ServeHTTP(w, req)
 

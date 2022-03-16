@@ -29,7 +29,7 @@ type foldersService interface {
 }
 
 type tasksService interface {
-	Insert(*postgres.CreateTaskDTO) (*models.Task, error)
+	Insert(int, *postgres.CreateTaskDTO) (*models.Task, error)
 	GetByFolder(int) ([]*models.Task, error)
 	GetByID(int) (*models.Task, error)
 	Delete(int) (int, error)
