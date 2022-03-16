@@ -14,8 +14,8 @@ import (
 )
 
 func (app *application) getFoldersByUser(w http.ResponseWriter, r *http.Request) {
-	claims, err := app.ctxClaims(r.Context())
-	if err != nil || claims.UserID < 0 {
+	claims, ok := app.claimsFromContext(r.Context())
+	if !ok || claims.UserID < 0 {
 		app.unauthorized(w)
 		return
 	}
@@ -43,8 +43,8 @@ func (app *application) getFolderByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := app.ctxClaims(r.Context())
-	if err != nil || claims.UserID < 1 {
+	claims, ok := app.claimsFromContext(r.Context())
+	if !ok || claims.UserID < 1 {
 		app.unauthorized(w)
 		return
 	}
@@ -70,14 +70,14 @@ func (app *application) getFolderByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) createFolder(w http.ResponseWriter, r *http.Request) {
-	claims, err := app.ctxClaims(r.Context())
-	if err != nil || claims.UserID < 1 {
+	claims, ok := app.claimsFromContext(r.Context())
+	if !ok || claims.UserID < 1 {
 		app.unauthorized(w)
 		return
 	}
 
 	dto := &postgres.CreateFolderDTO{}
-	err = json.NewDecoder(r.Body).Decode(dto)
+	err := json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -105,16 +105,16 @@ func (app *application) createFolder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) updateFolder(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Update a task"))
+	w.Write([]byte("Update a folder"))
 }
 
-func (app *application) deleteFolder(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Delete a task"))
+func (app *application) removeFolder(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Delete a folder"))
 }
 
 func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request) {
-	claims, err := app.ctxClaims(r.Context())
-	if err != nil || claims.UserID < 1 {
+	claims, ok := app.claimsFromContext(r.Context())
+	if !ok || claims.UserID < 1 {
 		app.unauthorized(w)
 		return
 	}
@@ -153,9 +153,21 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 	w.Write(jsonRsp)
 }
 
+func (app *application) getTaskByID(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Get one task"))
+}
+
+func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Update a task"))
+}
+
+func (app *application) removeTask(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Remove a task"))
+}
+
 func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
-	claims, err := app.ctxClaims(r.Context())
-	if err != nil || claims.UserID < 1 {
+	claims, ok := app.claimsFromContext(r.Context())
+	if !ok || claims.UserID < 1 {
 		app.unauthorized(w)
 		return
 	}
@@ -239,8 +251,8 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
-	claims, err := app.ctxClaims(r.Context())
-	if err != nil || claims.UserID < 1 {
+	claims, ok := app.claimsFromContext(r.Context())
+	if !ok || claims.UserID < 1 {
 		app.unauthorized(w)
 		return
 	}

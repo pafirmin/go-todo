@@ -1,4 +1,4 @@
-module github.com/pafirmin/do-daily-go
+module github.com/pafirmin/go-todo
 
 go 1.17
 

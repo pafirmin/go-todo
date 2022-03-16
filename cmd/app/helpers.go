@@ -41,12 +41,8 @@ func (app *application) forbidden(w http.ResponseWriter) {
 	app.clientError(w, http.StatusForbidden)
 }
 
-func (app *application) ctxClaims(ctx context.Context) (*jwt.UserClaims, error) {
+func (app *application) claimsFromContext(ctx context.Context) (*jwt.UserClaims, bool) {
 	claims, ok := ctx.Value(ctxKeyUserClaims).(*jwt.UserClaims)
 
-	if ok {
-		return claims, nil
-	}
-
-	return nil, errNoUser
+	return claims, ok
 }
