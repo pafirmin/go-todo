@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/pafirmin/do-daily-go/pkg/models"
+	"github.com/pafirmin/go-todo/pkg/models"
 )
 
 type FolderModel struct {
@@ -15,7 +15,7 @@ type CreateFolderDTO struct {
 	Name string `json:"name" validate:"required,min=1,max=30"`
 }
 
-func (m *FolderModel) Get(id int) (*models.Folder, error) {
+func (m *FolderModel) GetByID(id int) (*models.Folder, error) {
 	stmt := `SELECT id, name, user_id, created
 	FROM folders
 	WHERE folders.id = $1`
@@ -73,4 +73,15 @@ func (m *FolderModel) Insert(userId int, dto *CreateFolderDTO) (*models.Folder, 
 	}
 
 	return f, nil
+}
+
+func (m *FolderModel) Delete(id int) (int, error) {
+	stmt := `DELETE FROM folders WHERE folders.id = $1`
+	_, err := m.DB.Exec(stmt, id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }

@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
-	mockJwt "github.com/pafirmin/do-daily-go/pkg/jwt/mock"
-	"github.com/pafirmin/do-daily-go/pkg/models/mock"
+	mockJwt "github.com/pafirmin/go-todo/pkg/jwt/mock"
+	"github.com/pafirmin/go-todo/pkg/models/mock"
 )
 
 func newTestApplication(t *testing.T) *application {

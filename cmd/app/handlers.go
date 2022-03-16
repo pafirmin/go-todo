@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
-	"github.com/pafirmin/do-daily-go/pkg/models"
-	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
+	"github.com/pafirmin/go-todo/pkg/models"
+	"github.com/pafirmin/go-todo/pkg/models/postgres"
 )
 
 func (app *application) getFoldersByUser(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +49,7 @@ func (app *application) getFolderByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	f, err := app.folders.Get(id)
+	f, err := app.folders.GetByID(id)
 	if errors.Is(err, models.ErrNoRecord) {
 		app.notFound(w)
 		return
@@ -126,7 +126,7 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	f, err := app.folders.Get(id)
+	f, err := app.folders.GetByID(id)
 	if errors.Is(err, models.ErrNoRecord) {
 		app.notFound(w)
 		return
@@ -154,7 +154,46 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 }
 
 func (app *application) getTaskByID(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Get one task"))
+	claims, ok := app.claimsFromContext(r.Context())
+	if !ok || claims.UserID < 1 {
+		app.unauthorized(w)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	t, err := app.tasks.GetByID(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w)
+			return
+		} else {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	f, err := app.folders.GetByID(t.FolderID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	} else if f.UserID != claims.UserID {
+		app.forbidden(w)
+		return
+	}
+
+	jsonRsp, err := json.Marshal(t)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	w.Write(jsonRsp)
 }
 
 func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
@@ -179,7 +218,7 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	f, err := app.folders.Get(id)
+	f, err := app.folders.GetByID(id)
 	if errors.Is(err, models.ErrNoRecord) {
 		app.notFound(w)
 		return

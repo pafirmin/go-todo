@@ -3,8 +3,8 @@ package mock
 import (
 	"time"
 
-	"github.com/pafirmin/do-daily-go/pkg/models"
-	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
+	"github.com/pafirmin/go-todo/pkg/models"
+	"github.com/pafirmin/go-todo/pkg/models/postgres"
 )
 
 var mockFolder = &models.Folder{
@@ -20,7 +20,7 @@ func (f *FolderModel) Insert(userId int, dto *postgres.CreateFolderDTO) (*models
 	return mockFolder, nil
 }
 
-func (f *FolderModel) Get(id int) (*models.Folder, error) {
+func (f *FolderModel) GetByID(id int) (*models.Folder, error) {
 	switch id {
 	case 1:
 		return mockFolder, nil
@@ -31,4 +31,8 @@ func (f *FolderModel) Get(id int) (*models.Folder, error) {
 
 func (f *FolderModel) GetByUser(id int) ([]*models.Folder, error) {
 	return []*models.Folder{mockFolder}, nil
+}
+
+func (f *FolderModel) Delete(id int) (int, error) {
+	return 1, nil
 }

@@ -8,7 +8,7 @@ import (
 	"runtime/debug"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/pafirmin/do-daily-go/pkg/jwt"
+	"github.com/pafirmin/go-todo/pkg/jwt"
 )
 
 var errNoUser = errors.New("no user in request context")

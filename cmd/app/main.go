@@ -10,9 +10,9 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	_ "github.com/lib/pq"
-	"github.com/pafirmin/do-daily-go/pkg/jwt"
-	"github.com/pafirmin/do-daily-go/pkg/models"
-	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
+	"github.com/pafirmin/go-todo/pkg/jwt"
+	"github.com/pafirmin/go-todo/pkg/models"
+	"github.com/pafirmin/go-todo/pkg/models/postgres"
 )
 
 type usersService interface {
@@ -23,13 +23,16 @@ type usersService interface {
 
 type foldersService interface {
 	Insert(int, *postgres.CreateFolderDTO) (*models.Folder, error)
-	Get(int) (*models.Folder, error)
+	GetByID(int) (*models.Folder, error)
 	GetByUser(int) ([]*models.Folder, error)
+	Delete(int) (int, error)
 }
 
 type tasksService interface {
 	Insert(*postgres.CreateTaskDTO) (*models.Task, error)
 	GetByFolder(int) ([]*models.Task, error)
+	GetByID(int) (*models.Task, error)
+	Delete(int) (int, error)
 }
 
 type jwtService interface {

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/pafirmin/do-daily-go/pkg/models"
+	"github.com/pafirmin/go-todo/pkg/models"
 	"golang.org/x/crypto/bcrypt"
 )
 

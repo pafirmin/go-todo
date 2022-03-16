@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/pafirmin/do-daily-go/pkg/jwt"
+	"github.com/pafirmin/go-todo/pkg/jwt"
 )
 
 type JWTService struct {

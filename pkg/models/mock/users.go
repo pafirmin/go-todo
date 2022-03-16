@@ -3,8 +3,8 @@ package mock
 import (
 	"time"
 
-	"github.com/pafirmin/do-daily-go/pkg/models"
-	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
+	"github.com/pafirmin/go-todo/pkg/models"
+	"github.com/pafirmin/go-todo/pkg/models/postgres"
 )
 
 var mockUser = &models.User{

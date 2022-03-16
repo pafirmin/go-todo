@@ -2,9 +2,10 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
-	"github.com/pafirmin/do-daily-go/pkg/models"
+	"github.com/pafirmin/go-todo/pkg/models"
 )
 
 type TaskModel struct {
@@ -45,6 +46,27 @@ func (m *TaskModel) Insert(dto *CreateTaskDTO) (*models.Task, error) {
 	return t, nil
 }
 
+func (m *TaskModel) GetByID(id int) (*models.Task, error) {
+	stmt := `SELECT id, title, description, priority, due, complete, created, folder_id
+	FROM tasks 
+	WHERE tasks.id = $1`
+
+	t := &models.Task{}
+
+	row := m.DB.QueryRow(stmt, id)
+	err := row.Scan(&t.ID, &t.Title, &t.Description, &t.Priority, &t.Due, &t.Complete, &t.Created, &t.FolderID)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+
+	return t, nil
+}
+
 func (m *TaskModel) GetByFolder(folderId int) ([]*models.Task, error) {
 	stmt := `SELECT * FROM tasks WHERE tasks.folder_id = $1`
 
@@ -76,4 +98,15 @@ func (m *TaskModel) GetByFolder(folderId int) ([]*models.Task, error) {
 	}
 
 	return tasks, nil
+}
+
+func (m *TaskModel) Delete(id int) (int, error) {
+	stmt := `DELETE FROM tasks WHERE tasks.id = $1`
+	_, err := m.DB.Exec(stmt, id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }

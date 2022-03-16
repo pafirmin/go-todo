@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
+	"github.com/pafirmin/go-todo/pkg/models/postgres"
 )
 
 func TestGetFolder(t *testing.T) {

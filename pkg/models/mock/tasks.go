@@ -3,8 +3,8 @@ package mock
 import (
 	"time"
 
-	"github.com/pafirmin/do-daily-go/pkg/models"
-	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
+	"github.com/pafirmin/go-todo/pkg/models"
+	"github.com/pafirmin/go-todo/pkg/models/postgres"
 )
 
 var mockTask = &models.Task{
@@ -26,4 +26,12 @@ func (t *TaskModel) Insert(dto *postgres.CreateTaskDTO) (*models.Task, error) {
 
 func (t *TaskModel) GetByFolder(id int) ([]*models.Task, error) {
 	return []*models.Task{mockTask}, nil
+}
+
+func (t *TaskModel) GetByID(id int) (*models.Task, error) {
+	return mockTask, nil
+}
+
+func (t *TaskModel) Delete(id int) (int, error) {
+	return 1, nil
 }
