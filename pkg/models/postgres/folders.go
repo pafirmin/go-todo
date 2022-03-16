@@ -12,8 +12,7 @@ type FolderModel struct {
 }
 
 type CreateFolderDTO struct {
-	Name   string `json:"name"`
-	UserID int    `json:"-"`
+	Name string `json:"name" validate:"required,min=1,max=30"`
 }
 
 func (m *FolderModel) Get(id int) (*models.Folder, error) {
@@ -34,14 +33,40 @@ func (m *FolderModel) Get(id int) (*models.Folder, error) {
 	return f, nil
 }
 
-func (m *FolderModel) Insert(dto *CreateFolderDTO) (*models.Folder, error) {
+func (m *FolderModel) GetByUser(userId int) ([]*models.Folder, error) {
+	stmt := `SELECT id, name, user_id, created
+	FROM folders
+	WHERE folders.user_id = $1`
+
+	rows, err := m.DB.Query(stmt, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	folders := []*models.Folder{}
+
+	for rows.Next() {
+		f := &models.Folder{}
+		err := rows.Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
+		if err != nil {
+			return nil, err
+		}
+		folders = append(folders, f)
+	}
+
+	return folders, nil
+}
+
+func (m *FolderModel) Insert(userId int, dto *CreateFolderDTO) (*models.Folder, error) {
 	stmt := `INSERT INTO folders (name, user_id, created)
 	VALUES($1, $2, DEFAULT)
 	RETURNING *`
 
 	f := &models.Folder{}
 
-	err := m.DB.QueryRow(stmt, dto.Name, dto.UserID).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
+	err := m.DB.QueryRow(stmt, dto.Name, userId).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
 
 	if err != nil {
 		return nil, err

@@ -12,10 +12,10 @@ type TaskModel struct {
 }
 
 type CreateTaskDTO struct {
-	Title       string    `json:"title"`
+	Title       string    `json:"title" validate:"required,min=1,max=30"`
 	Description string    `json:"description"`
 	Priority    string    `json:"priority"`
-	Due         time.Time `json:"due"`
+	Due         time.Time `json:"due" validate:"required,datetime"`
 	FolderID    int       `json:"folderId"`
 }
 

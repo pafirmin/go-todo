@@ -16,7 +16,7 @@ var mockFolder = &models.Folder{
 
 type FolderModel struct{}
 
-func (f *FolderModel) Insert(dto *postgres.CreateFolderDTO) (*models.Folder, error) {
+func (f *FolderModel) Insert(userId int, dto *postgres.CreateFolderDTO) (*models.Folder, error) {
 	return mockFolder, nil
 }
 
@@ -27,4 +27,8 @@ func (f *FolderModel) Get(id int) (*models.Folder, error) {
 	default:
 		return nil, models.ErrNoRecord
 	}
+}
+
+func (f *FolderModel) GetByUser(id int) ([]*models.Folder, error) {
+	return []*models.Folder{mockFolder}, nil
 }

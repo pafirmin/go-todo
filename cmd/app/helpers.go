@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/pafirmin/do-daily-go/pkg/jwt"
 )
 
@@ -22,6 +23,10 @@ func (app *application) serverError(w http.ResponseWriter, err error) {
 
 func (app *application) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
+}
+
+func (app *application) validationError(w http.ResponseWriter, err validator.ValidationErrors) {
+	http.Error(w, err.Error(), http.StatusBadRequest)
 }
 
 func (app *application) notFound(w http.ResponseWriter) {

@@ -7,13 +7,32 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"github.com/pafirmin/do-daily-go/pkg/models"
 	"github.com/pafirmin/do-daily-go/pkg/models/postgres"
 )
 
-func (app *application) getFolders(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Get all tasks"))
+func (app *application) getFoldersByUser(w http.ResponseWriter, r *http.Request) {
+	claims, err := app.ctxClaims(r.Context())
+	if err != nil || claims.UserID < 0 {
+		app.unauthorized(w)
+		return
+	}
+
+	folders, err := app.folders.GetByUser(claims.UserID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	jsonRsp, err := json.Marshal(folders)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	w.Write(jsonRsp)
 }
 
 func (app *application) getFolderByID(w http.ResponseWriter, r *http.Request) {
@@ -57,14 +76,19 @@ func (app *application) createFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto := &postgres.CreateFolderDTO{UserID: claims.UserID}
+	dto := &postgres.CreateFolderDTO{}
 	err = json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	f, err := app.folders.Insert(dto)
+	if err := app.validator.Struct(dto); err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	f, err := app.folders.Insert(claims.UserID, dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -162,6 +186,11 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := app.validator.Struct(dto); err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
 	t, err := app.tasks.Insert(dto)
 	if err != nil {
 		app.serverError(w, err)
@@ -210,19 +239,13 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+	claims, err := app.ctxClaims(r.Context())
+	if err != nil || claims.UserID < 1 {
+		app.unauthorized(w)
 		return
 	}
 
-	if id < 1 {
-		app.notFound(w)
-		return
-	}
-
-	u, err := app.users.Get(id)
+	u, err := app.users.Get(claims.UserID)
 	if errors.Is(err, models.ErrNoRecord) {
 		app.notFound(w)
 		return
@@ -245,6 +268,11 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
 		app.serverError(w, err)
+		return
+	}
+
+	if err := app.validator.Struct(dto); err != nil {
+		app.validationError(w, err.(validator.ValidationErrors))
 		return
 	}
 

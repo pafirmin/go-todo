@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	_ "github.com/lib/pq"
 	"github.com/pafirmin/do-daily-go/pkg/jwt"
 	"github.com/pafirmin/do-daily-go/pkg/models"
@@ -21,8 +22,9 @@ type usersService interface {
 }
 
 type foldersService interface {
-	Insert(*postgres.CreateFolderDTO) (*models.Folder, error)
+	Insert(int, *postgres.CreateFolderDTO) (*models.Folder, error)
 	Get(int) (*models.Folder, error)
+	GetByUser(int) ([]*models.Folder, error)
 }
 
 type tasksService interface {
@@ -42,6 +44,7 @@ type application struct {
 	jwtService jwtService
 	tasks      tasksService
 	users      usersService
+	validator  *validator.Validate
 }
 
 func main() {
@@ -66,6 +69,7 @@ func main() {
 		jwtService: jwt.NewJWTService(secret),
 		tasks:      &postgres.TaskModel{DB: db},
 		users:      &postgres.UserModel{DB: db},
+		validator:  validator.New(),
 	}
 
 	srv := &http.Server{
