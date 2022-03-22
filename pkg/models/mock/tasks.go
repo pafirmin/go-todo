@@ -37,6 +37,10 @@ func (t *TaskModel) GetByID(id int) (*models.Task, error) {
 	}
 }
 
+func (t *TaskModel) Update(id int, dto *postgres.UpdateTaskDTO) (*models.Task, error) {
+	return mockTask, nil
+}
+
 func (t *TaskModel) Delete(id int) (int, error) {
 	return 1, nil
 }

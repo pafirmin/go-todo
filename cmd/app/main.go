@@ -25,6 +25,7 @@ type foldersService interface {
 	Insert(int, *postgres.CreateFolderDTO) (*models.Folder, error)
 	GetByID(int) (*models.Folder, error)
 	GetByUser(int) ([]*models.Folder, error)
+	Update(int, *postgres.UpdateFolderDTO) (*models.Folder, error)
 	Delete(int) (int, error)
 }
 
@@ -32,6 +33,7 @@ type tasksService interface {
 	Insert(int, *postgres.CreateTaskDTO) (*models.Task, error)
 	GetByFolder(int) ([]*models.Task, error)
 	GetByID(int) (*models.Task, error)
+	Update(int, *postgres.UpdateTaskDTO) (*models.Task, error)
 	Delete(int) (int, error)
 }
 
@@ -94,6 +96,7 @@ func openDB(dsn string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}

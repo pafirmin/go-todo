@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -45,4 +46,15 @@ func (app *application) claimsFromContext(ctx context.Context) (*jwt.UserClaims,
 	claims, ok := ctx.Value(ctxKeyUserClaims).(*jwt.UserClaims)
 
 	return claims, ok
+}
+
+func (app *application) writeJSON(w http.ResponseWriter, status int, body interface{}) {
+	jsonRsp, err := json.Marshal(body)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	w.WriteHeader(status)
+	w.Write(jsonRsp)
 }

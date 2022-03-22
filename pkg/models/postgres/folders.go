@@ -15,6 +15,10 @@ type CreateFolderDTO struct {
 	Name string `json:"name" validate:"required,min=1,max=30"`
 }
 
+type UpdateFolderDTO struct {
+	Name *string `json:"name" validate:"required,min=1,max=30,omitempty"`
+}
+
 func (m *FolderModel) GetByID(id int) (*models.Folder, error) {
 	stmt := `SELECT id, name, user_id, created
 	FROM folders
@@ -73,6 +77,24 @@ func (m *FolderModel) Insert(userId int, dto *CreateFolderDTO) (*models.Folder, 
 	}
 
 	return f, nil
+}
+
+func (m *FolderModel) Update(id int, dto *UpdateFolderDTO) (*models.Folder, error) {
+	stmt := `UPDATE folders
+	SET name = COALESCE($1, name)
+	WHERE folders.id = $2
+	RETURNING *
+	`
+
+	f := &models.Folder{}
+
+	err := m.DB.QueryRow(stmt, dto.Name, id).Scan(&f.Name)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return f, err
 }
 
 func (m *FolderModel) Delete(id int) (int, error) {

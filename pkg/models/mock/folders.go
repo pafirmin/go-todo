@@ -33,6 +33,10 @@ func (f *FolderModel) GetByUser(id int) ([]*models.Folder, error) {
 	return []*models.Folder{mockFolder}, nil
 }
 
+func (f *FolderModel) Update(id int, dto *postgres.UpdateFolderDTO) (*models.Folder, error) {
+	return mockFolder, nil
+}
+
 func (f *FolderModel) Delete(id int) (int, error) {
 	return 1, nil
 }
