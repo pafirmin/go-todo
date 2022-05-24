@@ -2,9 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
+	"flag"
 	"log"
-	"net/http"
 	"os"
 	"time"
 
@@ -42,7 +41,18 @@ type jwtService interface {
 	Parse(string) (*jwt.UserClaims, error)
 }
 
+type config struct {
+	port    int
+	dbAddr  string
+	limiter struct {
+		rps     float64
+		burst   int
+		enabled bool
+	}
+}
+
 type application struct {
+	config     config
 	errorLog   *log.Logger
 	folders    foldersService
 	infoLog    *log.Logger
@@ -53,42 +63,46 @@ type application struct {
 }
 
 func main() {
-	port := os.Getenv("PORT")
+	var cfg config
+	flag.IntVar(&cfg.port, "port", 4000, "Server port")
+	flag.StringVar(&cfg.dbAddr, "db-address", "", "Postgres DB Address")
+	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
+	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
+	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
+
+	flag.Parse()
+
 	secret := os.Getenv("SECRET")
-	dsn := "postgresql://postgres@localhost:5432/dodaily?sslmode=disable"
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	db, err := openDB(dsn)
+	infoLog.Print(secret)
+
+	db, err := openDB(cfg.dbAddr)
 	if err != nil {
 		errorLog.Fatal(err)
 	}
 
 	defer db.Close()
 
+	infoLog.Print("database connection pool established")
+
 	app := &application{
+		config:     cfg,
 		errorLog:   errorLog,
-		folders:    &postgres.FolderModel{DB: db},
 		infoLog:    infoLog,
-		jwtService: jwt.NewJWTService(secret),
+		folders:    &postgres.FolderModel{DB: db},
 		tasks:      &postgres.TaskModel{DB: db},
 		users:      &postgres.UserModel{DB: db},
+		jwtService: jwt.NewJWTService(secret),
 		validator:  validator.New(),
 	}
 
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%s", port),
-		ErrorLog:     errorLog,
-		Handler:      app.routes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
+	err = app.serve()
+	if err != nil {
+		errorLog.Fatal(err, nil)
 	}
-
-	infoLog.Printf("Staring server on %s", port)
-	err = srv.ListenAndServe()
-	errorLog.Fatal(err)
 }
 
 func openDB(dsn string) (*sql.DB, error) {

@@ -42,6 +42,10 @@ func (app *application) forbidden(w http.ResponseWriter) {
 	app.clientError(w, http.StatusForbidden)
 }
 
+func (app *application) rateLimitExceeded(w http.ResponseWriter) {
+	app.clientError(w, http.StatusTooManyRequests)
+}
+
 func (app *application) claimsFromContext(ctx context.Context) (*jwt.UserClaims, bool) {
 	claims, ok := ctx.Value(ctxKeyUserClaims).(*jwt.UserClaims)
 
@@ -49,7 +53,7 @@ func (app *application) claimsFromContext(ctx context.Context) (*jwt.UserClaims,
 }
 
 func (app *application) writeJSON(w http.ResponseWriter, status int, body interface{}) {
-	jsonRsp, err := json.Marshal(body)
+	jsonRsp, err := json.MarshalIndent(body, "", "\t")
 	if err != nil {
 		app.serverError(w, err)
 		return

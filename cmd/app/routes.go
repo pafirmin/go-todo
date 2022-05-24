@@ -10,7 +10,7 @@ import (
 
 func (app *application) routes() http.Handler {
 	router := mux.NewRouter().PathPrefix("/api/v1/").Subrouter()
-	standardMiddleware := alice.New(defaultHeaders, cors.Default().Handler, app.logRequest)
+	standardMiddleware := alice.New(defaultHeaders, cors.Default().Handler, app.logRequest, app.rateLimit)
 	authMiddleware := alice.New(app.requireAuth)
 
 	// Auth handlers
