@@ -30,7 +30,7 @@ type foldersService interface {
 
 type tasksService interface {
 	Insert(int, *postgres.CreateTaskDTO) (*models.Task, error)
-	GetByFolder(int) ([]*models.Task, error)
+	GetByFolder(int, string, models.Filters) ([]*models.Task, error)
 	GetByID(int) (*models.Task, error)
 	Update(int, *postgres.UpdateTaskDTO) (*models.Task, error)
 	Delete(int) (int, error)
@@ -64,20 +64,20 @@ type application struct {
 
 func main() {
 	var cfg config
+	var secret string
+
 	flag.IntVar(&cfg.port, "port", 4000, "Server port")
 	flag.StringVar(&cfg.dbAddr, "db-address", "", "Postgres DB Address")
 	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
 	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
 	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
 
-	flag.Parse()
+	flag.StringVar(&secret, "jwt-secret", "", "JWT Secret key")
 
-	secret := os.Getenv("SECRET")
+	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
-
-	infoLog.Print(secret)
 
 	db, err := openDB(cfg.dbAddr)
 	if err != nil {

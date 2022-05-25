@@ -65,6 +65,24 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	var input struct {
+		Priority string
+		models.Filters
+	}
+
+	qs := r.URL.Query()
+
+	input.Priority = app.stringFromQuery(qs, "priority", "")
+	input.Filters.Sort = app.stringFromQuery(qs, "sort", "id")
+	input.Filters.Page = app.intFromQuery(qs, "page", 1)
+	input.Filters.PageSize = app.intFromQuery(qs, "page_size", 20)
+	input.Filters.SortSafeList = []string{"id", "due", "-id", "-due"}
+
+	if !input.Filters.Valid() {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -84,7 +102,7 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	tasks, err := app.tasks.GetByFolder(f.ID)
+	tasks, err := app.tasks.GetByFolder(f.ID, input.Priority, input.Filters)
 	if err != nil {
 		app.serverError(w, err)
 		return

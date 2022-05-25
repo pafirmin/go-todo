@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"runtime/debug"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/pafirmin/go-todo/pkg/jwt"
@@ -61,4 +63,29 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, body interf
 
 	w.WriteHeader(status)
 	w.Write(jsonRsp)
+}
+
+func (app *application) stringFromQuery(qs url.Values, key string, defaultValue string) string {
+	s := qs.Get(key)
+
+	if s == "" {
+		return defaultValue
+	}
+
+	return s
+}
+
+func (app *application) intFromQuery(qs url.Values, key string, defaultValue int) int {
+	s := qs.Get(key)
+
+	if s == "" {
+		return defaultValue
+	}
+
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return defaultValue
+	}
+
+	return i
 }

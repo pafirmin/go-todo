@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/pafirmin/go-todo/pkg/models"
 )
@@ -73,10 +74,15 @@ func (m *TaskModel) GetByID(id int) (*models.Task, error) {
 	return t, nil
 }
 
-func (m *TaskModel) GetByFolder(folderId int) ([]*models.Task, error) {
-	stmt := `SELECT * FROM tasks WHERE tasks.folder_id = $1`
+func (m *TaskModel) GetByFolder(folderId int, priority string, filters models.Filters) ([]*models.Task, error) {
+	stmt := fmt.Sprintf(`SELECT * FROM tasks WHERE tasks.folder_id = $1
+		WHERE tasks.priority LIKE $2 OR $2 = ''
+		ORDER BY %s %s, id ASC
+		LIMIT $4 OFFSET $5`, filters.SortColumn(), filters.SortDirection())
 
-	rows, err := m.DB.Query(stmt, folderId)
+	args := []interface{}{folderId, priority, filters.Limit(), filters.Offset()}
+
+	rows, err := m.DB.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}
