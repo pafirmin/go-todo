@@ -1,36 +1,56 @@
-package postgres
+package data
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
-	"github.com/pafirmin/go-todo/pkg/models"
+	"github.com/pafirmin/go-todo/internal/validator"
 )
 
 type FolderModel struct {
 	DB *sql.DB
 }
 
+type Folder struct {
+	ID      int       `json:"id"`
+	Name    string    `json:"name"`
+	UserID  int       `json:"userId"`
+	Created time.Time `json:"created"`
+}
+
 type CreateFolderDTO struct {
 	Name string `json:"name" validate:"required,min=1,max=30"`
+}
+
+func (d *CreateFolderDTO) Validate(v *validator.Validator) {
+	v.Check(d.Name != "", "name", "folder name must be provided")
+	v.Check(len(d.Name) < 40, "name", "must be shorter than 40 characters")
 }
 
 type UpdateFolderDTO struct {
 	Name *string `json:"name" validate:"required,min=1,max=30,omitempty"`
 }
 
-func (m *FolderModel) GetByID(id int) (*models.Folder, error) {
+func (d *UpdateFolderDTO) Validate(v *validator.Validator) {
+	if d.Name != nil {
+		v.Check(*d.Name == "", "name", "folder name must be provided")
+		v.Check(len(*d.Name) < 40, "name", "must be shorter than 40 characters")
+	}
+}
+
+func (m FolderModel) GetByID(id int) (*Folder, error) {
 	stmt := `SELECT id, name, user_id, created
 	FROM folders
 	WHERE folders.id = $1`
 
-	f := &models.Folder{}
+	f := &Folder{}
 
 	err := m.DB.QueryRow(stmt, id).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, models.ErrNoRecord
+			return nil, ErrNoRecord
 		}
 		return nil, err
 	}
@@ -38,7 +58,7 @@ func (m *FolderModel) GetByID(id int) (*models.Folder, error) {
 	return f, nil
 }
 
-func (m *FolderModel) GetByUser(userId int, filters models.Filters) ([]*models.Folder, models.MetaData, error) {
+func (m FolderModel) GetByUser(userId int, filters Filters) ([]*Folder, MetaData, error) {
 	stmt := fmt.Sprintf(`SELECT count(*) OVER(), id, name, user_id, created
 	FROM folders
 	WHERE folders.user_id = $1
@@ -50,34 +70,34 @@ func (m *FolderModel) GetByUser(userId int, filters models.Filters) ([]*models.F
 
 	rows, err := m.DB.Query(stmt, args...)
 	if err != nil {
-		return nil, models.MetaData{}, err
+		return nil, MetaData{}, err
 	}
 
 	defer rows.Close()
 
-	folders := []*models.Folder{}
+	folders := []*Folder{}
 	totalRecords := 0
 
 	for rows.Next() {
-		f := &models.Folder{}
+		f := Folder{}
 		err := rows.Scan(&totalRecords, &f.ID, &f.Name, &f.UserID, &f.Created)
 		if err != nil {
-			return nil, models.MetaData{}, err
+			return nil, MetaData{}, err
 		}
-		folders = append(folders, f)
+		folders = append(folders, &f)
 	}
 
-	metadata := models.CalculateMetadata(totalRecords, filters.Page, filters.PageSize)
+	metadata := CalculateMetadata(totalRecords, filters.Page, filters.PageSize)
 
 	return folders, metadata, nil
 }
 
-func (m *FolderModel) Insert(userId int, dto *CreateFolderDTO) (*models.Folder, error) {
+func (m FolderModel) Insert(userId int, dto *CreateFolderDTO) (*Folder, error) {
 	stmt := `INSERT INTO folders (name, user_id, created)
 	VALUES($1, $2, DEFAULT)
 	RETURNING *`
 
-	f := &models.Folder{}
+	f := &Folder{}
 
 	err := m.DB.QueryRow(stmt, dto.Name, userId).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
 
@@ -88,14 +108,14 @@ func (m *FolderModel) Insert(userId int, dto *CreateFolderDTO) (*models.Folder, 
 	return f, nil
 }
 
-func (m *FolderModel) Update(id int, dto *UpdateFolderDTO) (*models.Folder, error) {
+func (m FolderModel) Update(id int, dto *UpdateFolderDTO) (*Folder, error) {
 	stmt := `UPDATE folders
 	SET name = COALESCE($1, name)
 	WHERE folders.id = $2
 	RETURNING *
 	`
 
-	f := &models.Folder{}
+	f := &Folder{}
 
 	err := m.DB.QueryRow(stmt, dto.Name, id).Scan(&f.Name)
 
@@ -106,7 +126,7 @@ func (m *FolderModel) Update(id int, dto *UpdateFolderDTO) (*models.Folder, erro
 	return f, err
 }
 
-func (m *FolderModel) Delete(id int) (int, error) {
+func (m FolderModel) Delete(id int) (int, error) {
 	stmt := `DELETE FROM folders WHERE folders.id = $1`
 	_, err := m.DB.Exec(stmt, id)
 

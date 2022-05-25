@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/pafirmin/go-todo/pkg/models"
-	"github.com/pafirmin/go-todo/pkg/models/postgres"
+	"github.com/pafirmin/go-todo/internal/data"
+	"github.com/pafirmin/go-todo/internal/validator"
 )
 
 func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
@@ -21,24 +21,24 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.badRequest(w)
 		return
 	}
 
-	dto := &postgres.CreateTaskDTO{}
+	dto := &data.CreateTaskDTO{}
 	err = json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	if err := app.validator.Struct(dto); err != nil {
-		app.clientError(w, http.StatusBadRequest)
+	if v := validator.New(); !v.Validate(dto) {
+		app.validationError(w, v)
 		return
 	}
 
-	f, err := app.folders.GetByID(id)
-	if errors.Is(err, models.ErrNoRecord) {
+	f, err := app.models.Folders.GetByID(id)
+	if errors.Is(err, data.ErrNoRecord) {
 		app.notFound(w)
 		return
 	} else if err != nil {
@@ -49,13 +49,13 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, err := app.tasks.Insert(f.ID, dto)
+	t, err := app.models.Tasks.Insert(f.ID, dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusCreated, responseWrapper{"task": t})
+	app.writeJSON(w, http.StatusCreated, responsePayload{"task": t})
 }
 
 func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +67,7 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 
 	var input struct {
 		Priority string
-		models.Filters
+		data.Filters
 	}
 
 	qs := r.URL.Query()
@@ -79,19 +79,19 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 	input.Filters.SortSafeList = []string{"id", "due", "created", "-id", "-due", "-created"}
 
 	if !input.Filters.Valid() {
-		app.clientError(w, http.StatusBadRequest)
+		app.badRequest(w)
 		return
 	}
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.badRequest(w)
 		return
 	}
 
-	f, err := app.folders.GetByID(id)
-	if errors.Is(err, models.ErrNoRecord) {
+	f, err := app.models.Folders.GetByID(id)
+	if errors.Is(err, data.ErrNoRecord) {
 		app.notFound(w)
 		return
 	} else if err != nil {
@@ -102,13 +102,13 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	tasks, metadata, err := app.tasks.GetByFolder(f.ID, input.Priority, input.Filters)
+	tasks, metadata, err := app.models.Tasks.GetByFolder(f.ID, input.Priority, input.Filters)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, responseWrapper{"metadata": metadata, "tasks": tasks})
+	app.writeJSON(w, http.StatusOK, responsePayload{"metadata": metadata, "tasks": tasks})
 }
 
 func (app *application) getTaskByID(w http.ResponseWriter, r *http.Request) {
@@ -121,13 +121,13 @@ func (app *application) getTaskByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.badRequest(w)
 		return
 	}
 
-	t, err := app.tasks.GetByID(id)
+	t, err := app.models.Tasks.GetByID(id)
 	if err != nil {
-		if errors.Is(err, models.ErrNoRecord) {
+		if errors.Is(err, data.ErrNoRecord) {
 			app.notFound(w)
 			return
 		} else {
@@ -136,7 +136,7 @@ func (app *application) getTaskByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	f, err := app.folders.GetByID(t.FolderID)
+	f, err := app.models.Folders.GetByID(t.FolderID)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -145,7 +145,7 @@ func (app *application) getTaskByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, responseWrapper{"task": t})
+	app.writeJSON(w, http.StatusOK, responsePayload{"task": t})
 }
 
 func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
@@ -158,36 +158,36 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.badRequest(w)
 		return
 	}
 
-	dto := &postgres.UpdateTaskDTO{}
+	dto := &data.UpdateTaskDTO{}
 	err = json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	if err := app.validator.Struct(dto); err != nil {
-		app.clientError(w, http.StatusBadRequest)
+	if v := validator.New(); !v.Validate(dto) {
+		app.validationError(w, v)
 		return
 	}
 
-	t, err := app.tasks.GetByID(id)
+	t, err := app.models.Tasks.GetByID(id)
 	if err != nil {
 		app.notFound(w)
 		return
 	}
 
-	f, err := app.folders.GetByID(t.FolderID)
+	f, err := app.models.Folders.GetByID(t.FolderID)
 	if f.ID != claims.UserID {
 		app.forbidden(w)
 		return
 	}
 
 	if dto.FolderID != nil {
-		f, err := app.folders.GetByID(*dto.FolderID)
+		f, err := app.models.Folders.GetByID(*dto.FolderID)
 		if err != nil {
 			app.notFound(w)
 			return
@@ -199,13 +199,13 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	t, err = app.tasks.Update(id, dto)
+	t, err = app.models.Tasks.Update(id, dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, responseWrapper{"task": t})
+	app.writeJSON(w, http.StatusOK, responsePayload{"task": t})
 }
 
 func (app *application) removeTask(w http.ResponseWriter, r *http.Request) {
@@ -218,23 +218,23 @@ func (app *application) removeTask(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.badRequest(w)
 		return
 	}
 
-	t, err := app.tasks.GetByID(id)
+	t, err := app.models.Tasks.GetByID(id)
 	if err != nil {
 		app.notFound(w)
 		return
 	}
 
-	f, err := app.folders.GetByID(t.FolderID)
+	f, err := app.models.Folders.GetByID(t.FolderID)
 	if f.ID != claims.UserID {
 		app.forbidden(w)
 		return
 	}
 
-	_, err = app.tasks.Delete(t.ID)
+	_, err = app.models.Tasks.Delete(t.ID)
 	if err != nil {
 		app.serverError(w, err)
 		return

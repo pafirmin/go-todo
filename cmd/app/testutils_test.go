@@ -10,18 +10,22 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
-	mockJwt "github.com/pafirmin/go-todo/pkg/jwt/mock"
-	"github.com/pafirmin/go-todo/pkg/models/mock"
+	"github.com/pafirmin/go-todo/internal/data"
+	"github.com/pafirmin/go-todo/internal/data/mock"
+	mockJwt "github.com/pafirmin/go-todo/internal/jwt/mock"
 )
 
 func newTestApplication(t *testing.T) *application {
+	models := data.Models{
+		Folders: mock.FolderModel{},
+		Users:   mock.UserModel{},
+		Tasks:   mock.TaskModel{},
+	}
 	return &application{
 		errorLog:   log.New(io.Discard, "", 0),
-		folders:    &mock.FolderModel{},
 		infoLog:    log.New(io.Discard, "", 0),
 		jwtService: &mockJwt.JWTService{Secret: "123"},
-		tasks:      &mock.TaskModel{},
-		users:      &mock.UserModel{},
+		models:     models,
 		validator:  validator.New(),
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pafirmin/go-todo/pkg/models/postgres"
+	"github.com/pafirmin/go-todo/internal/data"
 )
 
 func TestGetFolder(t *testing.T) {
@@ -87,16 +87,16 @@ func TestCreateFolder(t *testing.T) {
 		wantCode int
 		wantBody []byte
 		token    string
-		dto      *postgres.CreateFolderDTO
+		dto      *data.CreateFolderDTO
 	}{
 		{"Valid user", "/users/me/folders", http.StatusCreated, []byte("Test"), "123",
-			&postgres.CreateFolderDTO{Name: "Test"}},
+			&data.CreateFolderDTO{Name: "Test"}},
 		{"Invalid user", "/users/me/folders", http.StatusUnauthorized, nil, "invalid",
-			&postgres.CreateFolderDTO{Name: "Test"}},
+			&data.CreateFolderDTO{Name: "Test"}},
 		{"Trailing slash", "/users/me/folders/", http.StatusNotFound, nil, "123",
-			&postgres.CreateFolderDTO{Name: "Test"}},
+			&data.CreateFolderDTO{Name: "Test"}},
 		{"Invalid body", "/users/me/folders", http.StatusBadRequest, nil, "123",
-			&postgres.CreateFolderDTO{Name: ""}},
+			&data.CreateFolderDTO{Name: ""}},
 	}
 	rm := getRequestMaker(app.routes(), "POST", t)
 
@@ -190,18 +190,18 @@ func TestCreateTask(t *testing.T) {
 		wantCode int
 		wantBody []byte
 		token    string
-		dto      *postgres.CreateTaskDTO
+		dto      *data.CreateTaskDTO
 	}{
 		{"Valid request", "/folders/1/tasks", http.StatusCreated, []byte("Test"), "123",
-			&postgres.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().String()}},
+			&data.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().String()}},
 		{"Invalid user", "/folders/1/tasks", http.StatusUnauthorized, nil, "invalid",
-			&postgres.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().String()}},
+			&data.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().String()}},
 		{"Forbidden user", "/folders/1/tasks", http.StatusForbidden, nil, "456",
-			&postgres.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().String()}},
+			&data.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().String()}},
 		{"Trailing slash", "/folders/1/tasks/", http.StatusNotFound, nil, "123",
-			&postgres.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().String()}},
+			&data.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().String()}},
 		{"Invalid body", "/folders/1/tasks", http.StatusBadRequest, nil, "123",
-			&postgres.CreateTaskDTO{Title: "", Description: "Test", Priority: "low", Due: time.Now().String()}},
+			&data.CreateTaskDTO{Title: "", Description: "Test", Priority: "low", Due: time.Now().String()}},
 	}
 	rm := getRequestMaker(app.routes(), "POST", t)
 
@@ -263,16 +263,16 @@ func TestCreateUser(t *testing.T) {
 		wantCode int
 		wantBody []byte
 		token    string
-		dto      *postgres.CreateUserDTO
+		dto      *data.CreateUserDTO
 	}{
 		{"Valid body", "/users", http.StatusCreated, []byte("mock@example.com"), "123",
-			&postgres.CreateUserDTO{Email: "mock@example.com", Password: "Test1234"}},
+			&data.CreateUserDTO{Email: "mock@example.com", Password: "Test1234"}},
 		{"Invalid email", "/users", http.StatusBadRequest, nil, "123",
-			&postgres.CreateUserDTO{Email: "invalid", Password: "Test1234"}},
+			&data.CreateUserDTO{Email: "invalid", Password: "Test1234"}},
 		{"Invalid password", "/users", http.StatusBadRequest, nil, "123",
-			&postgres.CreateUserDTO{Email: "mock@example.com", Password: "Test123"}},
+			&data.CreateUserDTO{Email: "mock@example.com", Password: "Test123"}},
 		{"Trailing slash", "/users/", http.StatusNotFound, nil, "123",
-			&postgres.CreateUserDTO{Email: "mock@example.com", Password: "Test1234"}},
+			&data.CreateUserDTO{Email: "mock@example.com", Password: "Test1234"}},
 	}
 	rm := getRequestMaker(app.routes(), "POST", t)
 
@@ -301,14 +301,14 @@ func TestLogin(t *testing.T) {
 		wantCode int
 		wantBody []byte
 		token    string
-		dto      *postgres.Credentials
+		dto      *data.Credentials
 	}{
 		{"Valid credentials", "/auth/login", http.StatusOK, []byte("123"), "",
-			&postgres.Credentials{Email: "mock@example.com", Password: "Test1234"}},
+			&data.Credentials{Email: "mock@example.com", Password: "Test1234"}},
 		{"Invalid credentials", "/auth/login", http.StatusUnauthorized, nil, "",
-			&postgres.Credentials{Email: "invalid", Password: "Test1234"}},
+			&data.Credentials{Email: "invalid", Password: "Test1234"}},
 		{"Trailing slash", "/auth/login/", http.StatusNotFound, nil, "",
-			&postgres.Credentials{Email: "mock@example.com", Password: "Test1234"}},
+			&data.Credentials{Email: "mock@example.com", Password: "Test1234"}},
 	}
 	rm := getRequestMaker(app.routes(), "POST", t)
 

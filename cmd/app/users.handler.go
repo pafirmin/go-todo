@@ -6,13 +6,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/pafirmin/go-todo/pkg/models"
-	"github.com/pafirmin/go-todo/pkg/models/postgres"
+	"github.com/pafirmin/go-todo/internal/data"
+	"github.com/pafirmin/go-todo/internal/validator"
 )
 
 func (app *application) login(w http.ResponseWriter, r *http.Request) {
-	creds := &postgres.Credentials{}
+	creds := &data.Credentials{}
 
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
@@ -20,7 +19,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := app.users.Authenticate(creds)
+	id, err := app.models.Users.Authenticate(creds)
 	if err != nil {
 		app.unauthorized(w)
 		return
@@ -33,7 +32,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, responseWrapper{"token": token})
+	app.writeJSON(w, http.StatusOK, responsePayload{"token": token})
 }
 
 func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
@@ -43,8 +42,8 @@ func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := app.users.Get(claims.UserID)
-	if errors.Is(err, models.ErrNoRecord) {
+	u, err := app.models.Users.Get(claims.UserID)
+	if errors.Is(err, data.ErrNoRecord) {
 		app.notFound(w)
 		return
 	} else if err != nil {
@@ -52,11 +51,11 @@ func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, responseWrapper{"user": u})
+	app.writeJSON(w, http.StatusOK, responsePayload{"user": u})
 }
 
 func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
-	dto := &postgres.CreateUserDTO{}
+	dto := &data.CreateUserDTO{}
 
 	err := json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
@@ -64,16 +63,16 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := app.validator.Struct(dto); err != nil {
-		app.validationError(w, err.(validator.ValidationErrors))
+	if v := validator.New(); !v.Validate(dto) {
+		app.validationError(w, v)
 		return
 	}
 
-	u, err := app.users.Insert(dto)
+	u, err := app.models.Users.Insert(dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusCreated, responseWrapper{"user": u})
+	app.writeJSON(w, http.StatusCreated, responsePayload{"user": u})
 }

@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/pafirmin/go-todo/pkg/models"
-	"github.com/pafirmin/go-todo/pkg/models/postgres"
+	"github.com/pafirmin/go-todo/internal/data"
+	"github.com/pafirmin/go-todo/internal/validator"
 )
 
 func (app *application) createFolder(w http.ResponseWriter, r *http.Request) {
@@ -18,25 +18,25 @@ func (app *application) createFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto := &postgres.CreateFolderDTO{}
+	dto := &data.CreateFolderDTO{}
 	err := json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	if err := app.validator.Struct(dto); err != nil {
-		app.clientError(w, http.StatusBadRequest)
+	if v := validator.New(); !v.Validate(dto) {
+		app.validationError(w, v)
 		return
 	}
 
-	f, err := app.folders.Insert(claims.UserID, dto)
+	f, err := app.models.Folders.Insert(claims.UserID, dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusCreated, responseWrapper{"folder": f})
+	app.writeJSON(w, http.StatusCreated, responsePayload{"folder": f})
 }
 
 func (app *application) getFoldersByUser(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +47,7 @@ func (app *application) getFoldersByUser(w http.ResponseWriter, r *http.Request)
 	}
 
 	var input struct {
-		models.Filters
+		data.Filters
 	}
 
 	qs := r.URL.Query()
@@ -58,24 +58,24 @@ func (app *application) getFoldersByUser(w http.ResponseWriter, r *http.Request)
 	input.Filters.SortSafeList = []string{"id", "name", "-id", "-name"}
 
 	if !input.Filters.Valid() {
-		app.clientError(w, http.StatusBadRequest)
+		app.badRequest(w)
 		return
 	}
 
-	folders, metadata, err := app.folders.GetByUser(claims.UserID, input.Filters)
+	folders, metadata, err := app.models.Folders.GetByUser(claims.UserID, input.Filters)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, responseWrapper{"metadata": metadata, "folders": folders})
+	app.writeJSON(w, http.StatusOK, responsePayload{"metadata": metadata, "folders": folders})
 }
 
 func (app *application) getFolderByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.badRequest(w)
 		return
 	}
 
@@ -85,8 +85,8 @@ func (app *application) getFolderByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	f, err := app.folders.GetByID(id)
-	if errors.Is(err, models.ErrNoRecord) {
+	f, err := app.models.Folders.GetByID(id)
+	if errors.Is(err, data.ErrNoRecord) {
 		app.notFound(w)
 		return
 	} else if err != nil {
@@ -97,7 +97,7 @@ func (app *application) getFolderByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, responseWrapper{"folder": f})
+	app.writeJSON(w, http.StatusOK, responsePayload{"folder": f})
 }
 
 func (app *application) updateFolder(w http.ResponseWriter, r *http.Request) {
@@ -110,35 +110,35 @@ func (app *application) updateFolder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.badRequest(w)
 		return
 	}
 
-	dto := &postgres.UpdateFolderDTO{}
+	dto := &data.UpdateFolderDTO{}
 	err = json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	if err := app.validator.Struct(dto); err != nil {
-		app.clientError(w, http.StatusBadRequest)
+	if v := validator.New(); !v.Validate(dto) {
+		app.validationError(w, v)
 		return
 	}
 
-	f, err := app.folders.GetByID(id)
+	f, err := app.models.Folders.GetByID(id)
 	if f.ID != claims.UserID {
 		app.forbidden(w)
 		return
 	}
 
-	f, err = app.folders.Update(id, dto)
+	f, err = app.models.Folders.Update(id, dto)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, responseWrapper{"folder": f})
+	app.writeJSON(w, http.StatusOK, responsePayload{"folder": f})
 }
 
 func (app *application) removeFolder(w http.ResponseWriter, r *http.Request) {
@@ -151,12 +151,12 @@ func (app *application) removeFolder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.badRequest(w)
 		return
 	}
 
-	f, err := app.folders.GetByID(id)
-	if errors.Is(err, models.ErrNoRecord) {
+	f, err := app.models.Folders.GetByID(id)
+	if errors.Is(err, data.ErrNoRecord) {
 		app.notFound(w)
 		return
 	} else if err != nil {
@@ -167,7 +167,7 @@ func (app *application) removeFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = app.folders.Delete(id)
+	_, err = app.models.Folders.Delete(id)
 
 	if err != nil {
 		app.serverError(w, err)

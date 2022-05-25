@@ -9,32 +9,9 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	_ "github.com/lib/pq"
-	"github.com/pafirmin/go-todo/pkg/jwt"
-	"github.com/pafirmin/go-todo/pkg/models"
-	"github.com/pafirmin/go-todo/pkg/models/postgres"
+	"github.com/pafirmin/go-todo/internal/data"
+	"github.com/pafirmin/go-todo/internal/jwt"
 )
-
-type usersService interface {
-	Insert(*postgres.CreateUserDTO) (*models.User, error)
-	Get(int) (*models.User, error)
-	Authenticate(*postgres.Credentials) (int, error)
-}
-
-type foldersService interface {
-	Insert(int, *postgres.CreateFolderDTO) (*models.Folder, error)
-	GetByID(int) (*models.Folder, error)
-	GetByUser(int, models.Filters) ([]*models.Folder, models.MetaData, error)
-	Update(int, *postgres.UpdateFolderDTO) (*models.Folder, error)
-	Delete(int) (int, error)
-}
-
-type tasksService interface {
-	Insert(int, *postgres.CreateTaskDTO) (*models.Task, error)
-	GetByFolder(int, string, models.Filters) ([]*models.Task, models.MetaData, error)
-	GetByID(int) (*models.Task, error)
-	Update(int, *postgres.UpdateTaskDTO) (*models.Task, error)
-	Delete(int) (int, error)
-}
 
 type jwtService interface {
 	Sign(int, string, time.Time) (string, error)
@@ -54,12 +31,10 @@ type config struct {
 type application struct {
 	config     config
 	errorLog   *log.Logger
-	folders    foldersService
 	infoLog    *log.Logger
 	jwtService jwtService
-	tasks      tasksService
-	users      usersService
 	validator  *validator.Validate
+	models     data.Models
 }
 
 func main() {
@@ -84,8 +59,6 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
-	infoLog.Print(secret)
-
 	defer db.Close()
 
 	infoLog.Print("database connection pool established")
@@ -94,9 +67,7 @@ func main() {
 		config:     cfg,
 		errorLog:   errorLog,
 		infoLog:    infoLog,
-		folders:    &postgres.FolderModel{DB: db},
-		tasks:      &postgres.TaskModel{DB: db},
-		users:      &postgres.UserModel{DB: db},
+		models:     data.NewModels(db),
 		jwtService: jwt.NewJWTService([]byte(secret)),
 		validator:  validator.New(),
 	}
