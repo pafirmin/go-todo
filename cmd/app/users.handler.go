@@ -33,7 +33,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, map[string]string{token: token})
+	app.writeJSON(w, http.StatusOK, responseWrapper{"token": token})
 }
 
 func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +52,7 @@ func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, u)
+	app.writeJSON(w, http.StatusOK, responseWrapper{"user": u})
 }
 
 func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
@@ -75,5 +75,5 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusCreated, u)
+	app.writeJSON(w, http.StatusCreated, responseWrapper{"user": u})
 }

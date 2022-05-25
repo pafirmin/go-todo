@@ -28,8 +28,8 @@ type Folder struct {
 type Task struct {
 	ID          int       `json:"id"`
 	Title       string    `json:"title"`
-	Description string    `json:"Description"`
-	Priority    string    `json:"Priority"`
+	Description string    `json:"description"`
+	Priority    string    `json:"priority"`
 	Due         time.Time `json:"due"`
 	Complete    bool      `json:"complete"`
 	Created     time.Time `json:"created"`

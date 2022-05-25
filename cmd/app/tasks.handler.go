@@ -55,7 +55,7 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusCreated, t)
+	app.writeJSON(w, http.StatusCreated, responseWrapper{"task": t})
 }
 
 func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +76,7 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 	input.Filters.Sort = app.stringFromQuery(qs, "sort", "id")
 	input.Filters.Page = app.intFromQuery(qs, "page", 1)
 	input.Filters.PageSize = app.intFromQuery(qs, "page_size", 20)
-	input.Filters.SortSafeList = []string{"id", "due", "-id", "-due"}
+	input.Filters.SortSafeList = []string{"id", "due", "created", "-id", "-due", "-created"}
 
 	if !input.Filters.Valid() {
 		app.clientError(w, http.StatusBadRequest)
@@ -102,13 +102,13 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	tasks, err := app.tasks.GetByFolder(f.ID, input.Priority, input.Filters)
+	tasks, metadata, err := app.tasks.GetByFolder(f.ID, input.Priority, input.Filters)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, tasks)
+	app.writeJSON(w, http.StatusOK, responseWrapper{"metadata": metadata, "tasks": tasks})
 }
 
 func (app *application) getTaskByID(w http.ResponseWriter, r *http.Request) {
@@ -145,7 +145,7 @@ func (app *application) getTaskByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, f)
+	app.writeJSON(w, http.StatusOK, responseWrapper{"task": t})
 }
 
 func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
@@ -205,7 +205,7 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, t)
+	app.writeJSON(w, http.StatusOK, responseWrapper{"task": t})
 }
 
 func (app *application) removeTask(w http.ResponseWriter, r *http.Request) {

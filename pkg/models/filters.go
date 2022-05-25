@@ -1,12 +1,23 @@
 package models
 
-import "strings"
+import (
+	"math"
+	"strings"
+)
 
 type Filters struct {
 	Page         int
 	PageSize     int
 	Sort         string
 	SortSafeList []string
+}
+
+type MetaData struct {
+	CurrentPage  int `json:"current_page,omitempty"`
+	PageSize     int `json:"page_size,omitempty"`
+	FirstPage    int `json:"first_page,omitempty"`
+	LastPage     int `json:"last_page,omitempty"`
+	TotalRecords int `json:"total_records,omitempty"`
 }
 
 func (f Filters) Valid() bool {
@@ -30,6 +41,20 @@ func (f Filters) Valid() bool {
 	}
 
 	return true
+}
+
+func CalculateMetadata(totalRecords, page, pageSize int) MetaData {
+	if totalRecords == 0 {
+		return MetaData{}
+	}
+
+	return MetaData{
+		CurrentPage:  page,
+		PageSize:     pageSize,
+		FirstPage:    1,
+		LastPage:     int(math.Ceil(float64(totalRecords) / float64(pageSize))),
+		TotalRecords: totalRecords,
+	}
 }
 
 func (f Filters) SortColumn() string {

@@ -14,7 +14,7 @@ confirm:
 
 .PHONY: run/api
 run/api:
-	go run ./cmd/app -db-address=${DB_ADDR}
+	go run ./cmd/app -db-address=${DB_ADDR} -jwt-secret=${JWT_SECRET}
 
 .PHONY: db/migrations/up
 db/migrations/up: confirm

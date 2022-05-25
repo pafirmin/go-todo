@@ -29,8 +29,8 @@ func (f *FolderModel) GetByID(id int) (*models.Folder, error) {
 	}
 }
 
-func (f *FolderModel) GetByUser(id int) ([]*models.Folder, error) {
-	return []*models.Folder{mockFolder}, nil
+func (f *FolderModel) GetByUser(id int, filters models.Filters) ([]*models.Folder, models.MetaData, error) {
+	return []*models.Folder{mockFolder}, models.MetaData{}, nil
 }
 
 func (f *FolderModel) Update(id int, dto *postgres.UpdateFolderDTO) (*models.Folder, error) {

@@ -16,6 +16,8 @@ import (
 
 var errNoUser = errors.New("no user in request context")
 
+type responseWrapper map[string]interface{}
+
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	app.errorLog.Output(2, trace)
@@ -54,7 +56,7 @@ func (app *application) claimsFromContext(ctx context.Context) (*jwt.UserClaims,
 	return claims, ok
 }
 
-func (app *application) writeJSON(w http.ResponseWriter, status int, body interface{}) {
+func (app *application) writeJSON(w http.ResponseWriter, status int, body responseWrapper) {
 	jsonRsp, err := json.MarshalIndent(body, "", "\t")
 	if err != nil {
 		app.serverError(w, err)

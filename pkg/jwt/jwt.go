@@ -8,7 +8,7 @@ import (
 )
 
 type JWTService struct {
-	Secret string
+	Secret []byte
 }
 
 type UserClaims struct {
@@ -22,7 +22,7 @@ var (
 	ErrNoUser               = errors.New("jwt: could not parse user data from token")
 )
 
-func NewJWTService(secret string) *JWTService {
+func NewJWTService(secret []byte) *JWTService {
 	return &JWTService{
 		Secret: secret,
 	}

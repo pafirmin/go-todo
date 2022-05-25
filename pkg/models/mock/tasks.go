@@ -24,8 +24,8 @@ func (t *TaskModel) Insert(id int, dto *postgres.CreateTaskDTO) (*models.Task, e
 	return mockTask, nil
 }
 
-func (t *TaskModel) GetByFolder(id int, priority string, filters models.Filters) ([]*models.Task, error) {
-	return []*models.Task{mockTask}, nil
+func (t *TaskModel) GetByFolder(id int, priority string, filters models.Filters) ([]*models.Task, models.MetaData, error) {
+	return []*models.Task{mockTask}, models.MetaData{}, nil
 }
 
 func (t *TaskModel) GetByID(id int) (*models.Task, error) {

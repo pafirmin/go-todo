@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/pafirmin/go-todo/pkg/models"
 )
@@ -37,30 +38,38 @@ func (m *FolderModel) GetByID(id int) (*models.Folder, error) {
 	return f, nil
 }
 
-func (m *FolderModel) GetByUser(userId int) ([]*models.Folder, error) {
-	stmt := `SELECT id, name, user_id, created
+func (m *FolderModel) GetByUser(userId int, filters models.Filters) ([]*models.Folder, models.MetaData, error) {
+	stmt := fmt.Sprintf(`SELECT count(*) OVER(), id, name, user_id, created
 	FROM folders
-	WHERE folders.user_id = $1`
+	WHERE folders.user_id = $1
+	ORDER BY %s %s, id ASC
+	LIMIT $2 OFFSET $3
+	`, filters.SortColumn(), filters.SortDirection())
 
-	rows, err := m.DB.Query(stmt, userId)
+	args := []interface{}{userId, filters.Limit(), filters.Offset()}
+
+	rows, err := m.DB.Query(stmt, args...)
 	if err != nil {
-		return nil, err
+		return nil, models.MetaData{}, err
 	}
 
 	defer rows.Close()
 
 	folders := []*models.Folder{}
+	totalRecords := 0
 
 	for rows.Next() {
 		f := &models.Folder{}
-		err := rows.Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
+		err := rows.Scan(&totalRecords, &f.ID, &f.Name, &f.UserID, &f.Created)
 		if err != nil {
-			return nil, err
+			return nil, models.MetaData{}, err
 		}
 		folders = append(folders, f)
 	}
 
-	return folders, nil
+	metadata := models.CalculateMetadata(totalRecords, filters.Page, filters.PageSize)
+
+	return folders, metadata, nil
 }
 
 func (m *FolderModel) Insert(userId int, dto *CreateFolderDTO) (*models.Folder, error) {

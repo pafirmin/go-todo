@@ -36,7 +36,7 @@ func (app *application) createFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusCreated, f)
+	app.writeJSON(w, http.StatusCreated, responseWrapper{"folder": f})
 }
 
 func (app *application) getFoldersByUser(w http.ResponseWriter, r *http.Request) {
@@ -46,13 +46,29 @@ func (app *application) getFoldersByUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	folders, err := app.folders.GetByUser(claims.UserID)
+	var input struct {
+		models.Filters
+	}
+
+	qs := r.URL.Query()
+
+	input.Filters.Page = app.intFromQuery(qs, "page", 1)
+	input.Filters.PageSize = app.intFromQuery(qs, "page_size", 20)
+	input.Filters.Sort = app.stringFromQuery(qs, "sort", "id")
+	input.Filters.SortSafeList = []string{"id", "name", "-id", "-name"}
+
+	if !input.Filters.Valid() {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	folders, metadata, err := app.folders.GetByUser(claims.UserID, input.Filters)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, folders)
+	app.writeJSON(w, http.StatusOK, responseWrapper{"metadata": metadata, "folders": folders})
 }
 
 func (app *application) getFolderByID(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +97,7 @@ func (app *application) getFolderByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, f)
+	app.writeJSON(w, http.StatusOK, responseWrapper{"folder": f})
 }
 
 func (app *application) updateFolder(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +138,7 @@ func (app *application) updateFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, f)
+	app.writeJSON(w, http.StatusOK, responseWrapper{"folder": f})
 }
 
 func (app *application) removeFolder(w http.ResponseWriter, r *http.Request) {

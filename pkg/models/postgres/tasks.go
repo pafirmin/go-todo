@@ -74,26 +74,29 @@ func (m *TaskModel) GetByID(id int) (*models.Task, error) {
 	return t, nil
 }
 
-func (m *TaskModel) GetByFolder(folderId int, priority string, filters models.Filters) ([]*models.Task, error) {
-	stmt := fmt.Sprintf(`SELECT * FROM tasks WHERE tasks.folder_id = $1
-		WHERE tasks.priority LIKE $2 OR $2 = ''
+func (m *TaskModel) GetByFolder(folderId int, priority string, filters models.Filters) ([]*models.Task, models.MetaData, error) {
+	stmt := fmt.Sprintf(`SELECT count(*) OVER(), * FROM tasks
+		WHERE tasks.folder_id = $1
+		AND tasks.priority LIKE $2 OR $2 = ''
 		ORDER BY %s %s, id ASC
-		LIMIT $4 OFFSET $5`, filters.SortColumn(), filters.SortDirection())
+		LIMIT $3 OFFSET $4`, filters.SortColumn(), filters.SortDirection())
 
 	args := []interface{}{folderId, priority, filters.Limit(), filters.Offset()}
 
 	rows, err := m.DB.Query(stmt, args...)
 	if err != nil {
-		return nil, err
+		return nil, models.MetaData{}, err
 	}
 
 	defer rows.Close()
 
+	totalRecords := 0
 	tasks := []*models.Task{}
 
 	for rows.Next() {
 		t := &models.Task{}
 		err := rows.Scan(
+			&totalRecords,
 			&t.ID,
 			&t.Title,
 			&t.Description,
@@ -104,12 +107,14 @@ func (m *TaskModel) GetByFolder(folderId int, priority string, filters models.Fi
 			&t.FolderID,
 		)
 		if err != nil {
-			return nil, err
+			return nil, models.MetaData{}, err
 		}
 		tasks = append(tasks, t)
 	}
 
-	return tasks, nil
+	metadata := models.CalculateMetadata(totalRecords, filters.Page, filters.PageSize)
+
+	return tasks, metadata, nil
 }
 
 func (m *TaskModel) Update(id int, dto *UpdateTaskDTO) (*models.Task, error) {

@@ -23,14 +23,14 @@ type usersService interface {
 type foldersService interface {
 	Insert(int, *postgres.CreateFolderDTO) (*models.Folder, error)
 	GetByID(int) (*models.Folder, error)
-	GetByUser(int) ([]*models.Folder, error)
+	GetByUser(int, models.Filters) ([]*models.Folder, models.MetaData, error)
 	Update(int, *postgres.UpdateFolderDTO) (*models.Folder, error)
 	Delete(int) (int, error)
 }
 
 type tasksService interface {
 	Insert(int, *postgres.CreateTaskDTO) (*models.Task, error)
-	GetByFolder(int, string, models.Filters) ([]*models.Task, error)
+	GetByFolder(int, string, models.Filters) ([]*models.Task, models.MetaData, error)
 	GetByID(int) (*models.Task, error)
 	Update(int, *postgres.UpdateTaskDTO) (*models.Task, error)
 	Delete(int) (int, error)
@@ -84,6 +84,8 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	infoLog.Print(secret)
+
 	defer db.Close()
 
 	infoLog.Print("database connection pool established")
@@ -95,7 +97,7 @@ func main() {
 		folders:    &postgres.FolderModel{DB: db},
 		tasks:      &postgres.TaskModel{DB: db},
 		users:      &postgres.UserModel{DB: db},
-		jwtService: jwt.NewJWTService(secret),
+		jwtService: jwt.NewJWTService([]byte(secret)),
 		validator:  validator.New(),
 	}
 
