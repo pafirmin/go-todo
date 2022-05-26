@@ -1,6 +1,9 @@
 package validator
 
-import "regexp"
+import (
+	"regexp"
+	"time"
+)
 
 var (
 	emailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
@@ -19,10 +22,8 @@ func New() *Validator {
 	return &Validator{Errors: make(map[string]string)}
 }
 
-func (v *Validator) Validate (i Validatable) bool {
+func (v *Validator) Exec(i Validatable) {
 	i.Validate(v)
-
-	return v.Valid()
 }
 
 func (v *Validator) Valid() bool {
@@ -49,6 +50,15 @@ func PermittedValue[T comparable](value T, permittedValues ...T) bool {
 	}
 
 	return false
+}
+
+func ValidDate(value string) bool {
+	_, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return false
+	}
+
+	return true
 }
 
 func IsEmail(value string) bool {

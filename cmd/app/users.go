@@ -43,11 +43,13 @@ func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u, err := app.models.Users.Get(claims.UserID)
-	if errors.Is(err, data.ErrNoRecord) {
-		app.notFound(w)
-		return
-	} else if err != nil {
-		app.serverError(w, err)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrNoRecord):
+			app.notFound(w)
+		default:
+			app.serverError(w, err)
+		}
 		return
 	}
 
@@ -63,7 +65,8 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if v := validator.New(); !v.Validate(dto) {
+	v := validator.New()
+	if v.Exec(dto); !v.Valid() {
 		app.validationError(w, v)
 		return
 	}

@@ -25,6 +25,22 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	f, err := app.models.Folders.GetByID(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrNoRecord):
+			app.notFound(w)
+		default:
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	if f.UserID != claims.UserID {
+		app.forbidden(w)
+		return
+	}
+
 	dto := &data.CreateTaskDTO{}
 	err = json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
@@ -32,20 +48,9 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if v := validator.New(); !v.Validate(dto) {
+	v := validator.New()
+	if v.Exec(dto); !v.Valid() {
 		app.validationError(w, v)
-		return
-	}
-
-	f, err := app.models.Folders.GetByID(id)
-	if errors.Is(err, data.ErrNoRecord) {
-		app.notFound(w)
-		return
-	} else if err != nil {
-		app.serverError(w, err)
-		return
-	} else if f.UserID != claims.UserID {
-		app.forbidden(w)
 		return
 	}
 
@@ -65,6 +70,29 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		app.badRequest(w)
+		return
+	}
+
+	f, err := app.models.Folders.GetByID(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrNoRecord):
+			app.notFound(w)
+		default:
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	if f.UserID != claims.UserID {
+		app.forbidden(w)
+		return
+	}
+
 	var input struct {
 		Priority string
 		data.Filters
@@ -78,27 +106,9 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 	input.Filters.PageSize = app.intFromQuery(qs, "page_size", 20)
 	input.Filters.SortSafeList = []string{"id", "due", "created", "-id", "-due", "-created"}
 
-	if !input.Filters.Valid() {
-		app.badRequest(w)
-		return
-	}
-
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		app.badRequest(w)
-		return
-	}
-
-	f, err := app.models.Folders.GetByID(id)
-	if errors.Is(err, data.ErrNoRecord) {
-		app.notFound(w)
-		return
-	} else if err != nil {
-		app.serverError(w, err)
-		return
-	} else if f.UserID != claims.UserID {
-		app.forbidden(w)
+	v := validator.New()
+	if v.Exec(&input.Filters); !v.Valid() {
+		app.validationError(w, v)
 		return
 	}
 
@@ -127,20 +137,22 @@ func (app *application) getTaskByID(w http.ResponseWriter, r *http.Request) {
 
 	t, err := app.models.Tasks.GetByID(id)
 	if err != nil {
-		if errors.Is(err, data.ErrNoRecord) {
+		switch {
+		case errors.Is(err, data.ErrNoRecord):
 			app.notFound(w)
-			return
-		} else {
+		default:
 			app.serverError(w, err)
-			return
 		}
+		return
 	}
 
 	f, err := app.models.Folders.GetByID(t.FolderID)
 	if err != nil {
 		app.serverError(w, err)
 		return
-	} else if f.UserID != claims.UserID {
+	}
+
+	if f.UserID != claims.UserID {
 		app.forbidden(w)
 		return
 	}
@@ -162,6 +174,28 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	t, err := app.models.Tasks.GetByID(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrNoRecord):
+			app.notFound(w)
+		default:
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	f, err := app.models.Folders.GetByID(t.FolderID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	if f.ID != claims.UserID {
+		app.forbidden(w)
+		return
+	}
+
 	dto := &data.UpdateTaskDTO{}
 	err = json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
@@ -169,32 +203,26 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if v := validator.New(); !v.Validate(dto) {
+	v := validator.New()
+	if v.Exec(dto); !v.Valid() {
 		app.validationError(w, v)
 		return
 	}
 
-	t, err := app.models.Tasks.GetByID(id)
-	if err != nil {
-		app.notFound(w)
-		return
-	}
-
-	f, err := app.models.Folders.GetByID(t.FolderID)
-	if f.ID != claims.UserID {
-		app.forbidden(w)
-		return
-	}
-
-	if dto.FolderID != nil {
+	if dto.FolderID != nil && *dto.FolderID != f.ID {
 		f, err := app.models.Folders.GetByID(*dto.FolderID)
 		if err != nil {
-			app.notFound(w)
+			switch {
+			case errors.Is(err, data.ErrNoRecord):
+				app.clientError(w, http.StatusBadRequest, "target folder not found")
+			default:
+				app.serverError(w, err)
+			}
 			return
 		}
 
 		if f.UserID != claims.UserID {
-			app.forbidden(w)
+			app.clientError(w, http.StatusBadRequest, "insufficient privileges to access target folder")
 			return
 		}
 	}
@@ -224,11 +252,21 @@ func (app *application) removeTask(w http.ResponseWriter, r *http.Request) {
 
 	t, err := app.models.Tasks.GetByID(id)
 	if err != nil {
-		app.notFound(w)
+		switch {
+		case errors.Is(err, data.ErrNoRecord):
+			app.notFound(w)
+		default:
+			app.serverError(w, err)
+		}
 		return
 	}
 
 	f, err := app.models.Folders.GetByID(t.FolderID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
 	if f.ID != claims.UserID {
 		app.forbidden(w)
 		return

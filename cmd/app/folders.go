@@ -25,7 +25,8 @@ func (app *application) createFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if v := validator.New(); !v.Validate(dto) {
+	v := validator.New()
+	if v.Exec(dto); !v.Valid() {
 		app.validationError(w, v)
 		return
 	}
@@ -57,8 +58,9 @@ func (app *application) getFoldersByUser(w http.ResponseWriter, r *http.Request)
 	input.Filters.Sort = app.stringFromQuery(qs, "sort", "id")
 	input.Filters.SortSafeList = []string{"id", "name", "-id", "-name"}
 
-	if !input.Filters.Valid() {
-		app.badRequest(w)
+	v := validator.New()
+	if v.Exec(&input.Filters); !v.Valid() {
+		app.validationError(w, v)
 		return
 	}
 
@@ -86,13 +88,17 @@ func (app *application) getFolderByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	f, err := app.models.Folders.GetByID(id)
-	if errors.Is(err, data.ErrNoRecord) {
-		app.notFound(w)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrNoRecord):
+			app.notFound(w)
+		default:
+			app.serverError(w, err)
+		}
 		return
-	} else if err != nil {
-		app.serverError(w, err)
-		return
-	} else if f.UserID != claims.UserID {
+	}
+
+	if f.UserID != claims.UserID {
 		app.forbidden(w)
 		return
 	}
@@ -114,6 +120,22 @@ func (app *application) updateFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	f, err := app.models.Folders.GetByID(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrNoRecord):
+			app.notFound(w)
+		default:
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	if f.UserID != claims.UserID {
+		app.forbidden(w)
+		return
+	}
+
 	dto := &data.UpdateFolderDTO{}
 	err = json.NewDecoder(r.Body).Decode(dto)
 	if err != nil {
@@ -121,14 +143,9 @@ func (app *application) updateFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if v := validator.New(); !v.Validate(dto) {
+	v := validator.New()
+	if v.Exec(dto); !v.Valid() {
 		app.validationError(w, v)
-		return
-	}
-
-	f, err := app.models.Folders.GetByID(id)
-	if f.ID != claims.UserID {
-		app.forbidden(w)
 		return
 	}
 
@@ -156,19 +173,22 @@ func (app *application) removeFolder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	f, err := app.models.Folders.GetByID(id)
-	if errors.Is(err, data.ErrNoRecord) {
-		app.notFound(w)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrNoRecord):
+			app.notFound(w)
+		default:
+			app.serverError(w, err)
+		}
 		return
-	} else if err != nil {
-		app.serverError(w, err)
-		return
-	} else if f.UserID != claims.UserID {
+	}
+
+	if f.UserID != claims.UserID {
 		app.forbidden(w)
 		return
 	}
 
 	_, err = app.models.Folders.Delete(id)
-
 	if err != nil {
 		app.serverError(w, err)
 		return

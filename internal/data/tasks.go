@@ -35,6 +35,8 @@ func (d *CreateTaskDTO) Validate(v *validator.Validator) {
 	v.Check(d.Title != "", "title", "must be provided")
 	v.Check(len(d.Title) < 40, "title", "must be shorter than 40 characters")
 	v.Check(len(d.Description) < 600, "description", "must be shorter than 600 characters")
+	v.Check(validator.ValidDate(d.Due), "due", "must be valid RFC3339 date string")
+	v.Check(validator.PermittedValue(d.Priority, "low", "medium", "high"), "priority", "must be one of 'low', 'medium' or 'high'")
 }
 
 type UpdateTaskDTO struct {
