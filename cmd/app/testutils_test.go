@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/pafirmin/go-todo/internal/data"
 	"github.com/pafirmin/go-todo/internal/data/mock"
 	mockJwt "github.com/pafirmin/go-todo/internal/jwt/mock"
@@ -26,7 +25,6 @@ func newTestApplication(t *testing.T) *application {
 		infoLog:    log.New(io.Discard, "", 0),
 		jwtService: &mockJwt.JWTService{Secret: "123"},
 		models:     models,
-		validator:  validator.New(),
 	}
 }
 

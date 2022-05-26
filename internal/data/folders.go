@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -45,9 +46,12 @@ func (m FolderModel) GetByID(id int) (*Folder, error) {
 	FROM folders
 	WHERE folders.id = $1`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	f := &Folder{}
 
-	err := m.DB.QueryRow(stmt, id).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
+	err := m.DB.QueryRowContext(ctx, stmt, id).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -66,9 +70,12 @@ func (m FolderModel) GetByUser(userId int, filters Filters) ([]*Folder, MetaData
 	LIMIT $2 OFFSET $3
 	`, filters.SortColumn(), filters.SortDirection())
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	args := []interface{}{userId, filters.Limit(), filters.Offset()}
 
-	rows, err := m.DB.Query(stmt, args...)
+	rows, err := m.DB.QueryContext(ctx, stmt, args...)
 	if err != nil {
 		return nil, MetaData{}, err
 	}
@@ -97,9 +104,12 @@ func (m FolderModel) Insert(userId int, dto *CreateFolderDTO) (*Folder, error) {
 	VALUES($1, $2, DEFAULT)
 	RETURNING *`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	f := &Folder{}
 
-	err := m.DB.QueryRow(stmt, dto.Name, userId).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
+	err := m.DB.QueryRowContext(ctx, stmt, dto.Name, userId).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
 
 	if err != nil {
 		return nil, err
@@ -115,9 +125,12 @@ func (m FolderModel) Update(id int, dto *UpdateFolderDTO) (*Folder, error) {
 	RETURNING *
 	`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	f := &Folder{}
 
-	err := m.DB.QueryRow(stmt, dto.Name, id).Scan(&f.Name)
+	err := m.DB.QueryRowContext(ctx, stmt, dto.Name, id).Scan(&f.Name)
 
 	if err != nil {
 		return nil, err
@@ -128,8 +141,11 @@ func (m FolderModel) Update(id int, dto *UpdateFolderDTO) (*Folder, error) {
 
 func (m FolderModel) Delete(id int) (int, error) {
 	stmt := `DELETE FROM folders WHERE folders.id = $1`
-	_, err := m.DB.Exec(stmt, id)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := m.DB.ExecContext(ctx, stmt, id)
 	if err != nil {
 		return 0, err
 	}

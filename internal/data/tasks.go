@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -62,9 +63,12 @@ func (m TaskModel) Insert(folderID int, dto *CreateTaskDTO) (*Task, error) {
 	VALUES ($1, $2, $3, $4, DEFAULT, DEFAULT, $5)
 	RETURNING *`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	t := &Task{}
 
-	row := m.DB.QueryRow(stmt, dto.Title, dto.Description, dto.Priority, dto.Due, folderID)
+	row := m.DB.QueryRowContext(ctx, stmt, dto.Title, dto.Description, dto.Priority, dto.Due, folderID)
 	err := row.Scan(
 		&t.ID,
 		&t.Title,
@@ -88,9 +92,12 @@ func (m TaskModel) GetByID(id int) (*Task, error) {
 	FROM tasks 
 	WHERE tasks.id = $1`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	t := &Task{}
 
-	row := m.DB.QueryRow(stmt, id)
+	row := m.DB.QueryRowContext(ctx, stmt, id)
 	err := row.Scan(&t.ID, &t.Title, &t.Description, &t.Priority, &t.Due, &t.Complete, &t.Created, &t.FolderID)
 
 	if err != nil {
@@ -111,9 +118,12 @@ func (m TaskModel) GetByFolder(folderId int, priority string, filters Filters) (
 		ORDER BY %s %s, id ASC
 		LIMIT $3 OFFSET $4`, filters.SortColumn(), filters.SortDirection())
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	args := []interface{}{folderId, priority, filters.Limit(), filters.Offset()}
 
-	rows, err := m.DB.Query(stmt, args...)
+	rows, err := m.DB.QueryContext(ctx, stmt, args...)
 	if err != nil {
 		return nil, MetaData{}, err
 	}
@@ -153,9 +163,13 @@ func (m TaskModel) Update(id int, dto *UpdateTaskDTO) (*Task, error) {
 	WHERE tasks.id = $6
 	RETURNING *
 	`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	t := &Task{}
 
-	row := m.DB.QueryRow(stmt, dto.Title, dto.Description, dto.Priority, dto.Due, dto.FolderID, id)
+	row := m.DB.QueryRowContext(ctx, stmt, dto.Title, dto.Description, dto.Priority, dto.Due, dto.FolderID, id)
 	err := row.Scan(
 		&t.ID,
 		&t.Title,
@@ -176,7 +190,11 @@ func (m TaskModel) Update(id int, dto *UpdateTaskDTO) (*Task, error) {
 
 func (m TaskModel) Delete(id int) (int, error) {
 	stmt := `DELETE FROM tasks WHERE tasks.id = $1`
-	_, err := m.DB.Exec(stmt, id)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := m.DB.ExecContext(ctx, stmt, id)
 
 	if err != nil {
 		return 0, err

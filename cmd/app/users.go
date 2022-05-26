@@ -26,7 +26,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	exp := time.Now().Add(24 * time.Hour)
-	token, err := app.jwtService.Sign(id, creds.Email, exp)
+	token, err := app.jwtService.Sign(id, exp)
 	if err != nil {
 		app.serverError(w, err)
 		return

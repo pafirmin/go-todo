@@ -12,8 +12,7 @@ type JWTService struct {
 }
 
 type UserClaims struct {
-	Email  string `json:"email"`
-	UserID int    `json:"userId"`
+	UserID int `json:"userId"`
 	jwt.StandardClaims
 }
 
@@ -28,9 +27,8 @@ func NewJWTService(secret []byte) *JWTService {
 	}
 }
 
-func (j *JWTService) Sign(id int, email string, expires time.Time) (string, error) {
+func (j *JWTService) Sign(id int, expires time.Time) (string, error) {
 	claims := &UserClaims{
-		Email:  email,
 		UserID: id,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expires.Unix(),

@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"time"
@@ -39,10 +40,14 @@ type Credentials struct {
 func (m UserModel) Get(id int) (*User, error) {
 	stmt := `SELECT * FROM users WHERE users.id = $1`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	u := &User{}
 
-	err := m.DB.QueryRow(stmt, id).Scan(&u.ID, &u.Email, &u.HashedPassword, &u.Created)
+	rows := m.DB.QueryRowContext(ctx, stmt, id)
 
+	err := rows.Scan(&u.ID, &u.Email, &u.HashedPassword, &u.Created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -62,12 +67,14 @@ func (m UserModel) Insert(dto *CreateUserDTO) (*User, error) {
 	VALUES($1, $2, now())
 	RETURNING *`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	u := User{}
 
-	err = m.DB.
-		QueryRow(stmt, dto.Email, string(hashedPassword)).
-		Scan(&u.ID, &u.Email, &u.HashedPassword, &u.Created)
+	rows := m.DB.QueryRowContext(ctx, stmt, dto.Email, string(hashedPassword))
 
+	err = rows.Scan(&u.ID, &u.Email, &u.HashedPassword, &u.Created)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +88,10 @@ func (m UserModel) Authenticate(creds *Credentials) (int, error) {
 
 	stmt := `SELECT id, hashed_password FROM users WHERE email = $1`
 
-	row := m.DB.QueryRow(stmt, creds.Email)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	row := m.DB.QueryRowContext(ctx, stmt, creds.Email)
 	if err := row.Scan(&id, &hashedPassword); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, ErrInvalidCredentials

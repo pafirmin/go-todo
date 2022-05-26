@@ -18,10 +18,8 @@ func (j *JWTService) Parse(tokenStr string) (*jwt.UserClaims, error) {
 
 	claims := jwt.UserClaims{
 		UserID: 1,
-		Email:  "test@example.com",
 	}
 	claims.ExpiresAt = time.Now().Add(24 * time.Hour).UnixMicro()
-	claims.Email = "test@example.com"
 	if tokenStr == "123" {
 		claims.UserID = 1
 	} else {
@@ -31,6 +29,6 @@ func (j *JWTService) Parse(tokenStr string) (*jwt.UserClaims, error) {
 	return &claims, nil
 }
 
-func (j *JWTService) Sign(id int, email string, expires time.Time) (string, error) {
+func (j *JWTService) Sign(id int, expires time.Time) (string, error) {
 	return "123", nil
 }

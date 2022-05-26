@@ -7,20 +7,24 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	_ "github.com/lib/pq"
 	"github.com/pafirmin/go-todo/internal/data"
 	"github.com/pafirmin/go-todo/internal/jwt"
 )
 
+var (
+	version = Version()
+)
+
 type jwtService interface {
-	Sign(int, string, time.Time) (string, error)
+	Sign(int, time.Time) (string, error)
 	Parse(string) (*jwt.UserClaims, error)
 }
 
 type config struct {
 	port    int
 	dbAddr  string
+	env     string
 	limiter struct {
 		rps     float64
 		burst   int
@@ -33,7 +37,6 @@ type application struct {
 	errorLog   *log.Logger
 	infoLog    *log.Logger
 	jwtService jwtService
-	validator  *validator.Validate
 	models     data.Models
 }
 
@@ -43,10 +46,10 @@ func main() {
 
 	flag.IntVar(&cfg.port, "port", 4000, "Server port")
 	flag.StringVar(&cfg.dbAddr, "db-address", "", "Postgres DB Address")
-	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
-	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
+	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
+	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 5, "Rate limiter maximum requests per second")
+	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 40, "Rate limiter maximum burst")
 	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
-
 	flag.StringVar(&secret, "jwt-secret", "", "JWT Secret key")
 
 	flag.Parse()
@@ -69,7 +72,6 @@ func main() {
 		infoLog:    infoLog,
 		models:     data.NewModels(db),
 		jwtService: jwt.NewJWTService([]byte(secret)),
-		validator:  validator.New(),
 	}
 
 	err = app.serve()

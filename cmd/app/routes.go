@@ -13,26 +13,28 @@ func (app *application) routes() http.Handler {
 	standardMiddleware := alice.New(defaultHeaders, cors.Default().Handler, app.logRequest, app.rateLimit)
 	authMiddleware := alice.New(app.requireAuth)
 
+	router.HandleFunc("/status", app.showStatus).Methods(http.MethodGet)
+
 	// Auth handlers
-	router.HandleFunc("/auth/login", app.login).Methods("POST")
+	router.HandleFunc("/auth/login", app.login).Methods(http.MethodPost)
 
 	// User handlers
-	router.Handle("/users", authMiddleware.ThenFunc(app.createUser)).Methods("POST")
-	router.Handle("/users/me", authMiddleware.ThenFunc(app.getUserByID)).Methods("GET")
+	router.Handle("/users", authMiddleware.ThenFunc(app.createUser)).Methods(http.MethodPost)
+	router.Handle("/users/me", authMiddleware.ThenFunc(app.getUserByID)).Methods(http.MethodGet)
 
 	// Folder handlers
-	router.Handle("/users/me/folders", authMiddleware.ThenFunc(app.createFolder)).Methods("POST")
-	router.Handle("/users/me/folders", authMiddleware.ThenFunc(app.getFoldersByUser)).Methods("GET")
-	router.Handle("/folders/{id:[0-9]+}", authMiddleware.ThenFunc(app.getFolderByID)).Methods("GET")
-	router.Handle("/folders/{id:[0-9]+}", authMiddleware.ThenFunc(app.updateFolder)).Methods("PATCH")
-	router.Handle("/folders/{id:[0-9]+}", authMiddleware.ThenFunc(app.removeFolder)).Methods("DELETE")
+	router.Handle("/users/me/folders", authMiddleware.ThenFunc(app.createFolder)).Methods(http.MethodPost)
+	router.Handle("/users/me/folders", authMiddleware.ThenFunc(app.getFoldersByUser)).Methods(http.MethodGet)
+	router.Handle("/folders/{id:[0-9]+}", authMiddleware.ThenFunc(app.getFolderByID)).Methods(http.MethodGet)
+	router.Handle("/folders/{id:[0-9]+}", authMiddleware.ThenFunc(app.updateFolder)).Methods(http.MethodPatch)
+	router.Handle("/folders/{id:[0-9]+}", authMiddleware.ThenFunc(app.removeFolder)).Methods(http.MethodDelete)
 
 	// Task handlers
-	router.Handle("/folders/{id:[0-9]+}/tasks", authMiddleware.ThenFunc(app.createTask)).Methods("POST")
-	router.Handle("/folders/{id:[0-9]+}/tasks", authMiddleware.ThenFunc(app.getTasksByFolder)).Methods("GET")
-	router.Handle("/tasks/{id:[0-9]+}", authMiddleware.ThenFunc(app.getTaskByID)).Methods("GET")
-	router.Handle("/tasks/{id:[0-9]+}", authMiddleware.ThenFunc(app.updateTask)).Methods("PATCH")
-	router.Handle("/tasks/{id:[0-9]+}", authMiddleware.ThenFunc(app.removeTask)).Methods("DELETE")
+	router.Handle("/folders/{id:[0-9]+}/tasks", authMiddleware.ThenFunc(app.createTask)).Methods(http.MethodPost)
+	router.Handle("/folders/{id:[0-9]+}/tasks", authMiddleware.ThenFunc(app.getTasksByFolder)).Methods(http.MethodGet)
+	router.Handle("/tasks/{id:[0-9]+}", authMiddleware.ThenFunc(app.getTaskByID)).Methods(http.MethodGet)
+	router.Handle("/tasks/{id:[0-9]+}", authMiddleware.ThenFunc(app.updateTask)).Methods(http.MethodPatch)
+	router.Handle("/tasks/{id:[0-9]+}", authMiddleware.ThenFunc(app.removeTask)).Methods(http.MethodDelete)
 
 	return standardMiddleware.Then(router)
 }

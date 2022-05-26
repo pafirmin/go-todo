@@ -107,6 +107,7 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 	input.Filters.SortSafeList = []string{"id", "due", "created", "-id", "-due", "-created"}
 
 	v := validator.New()
+
 	if v.Exec(&input.Filters); !v.Valid() {
 		app.validationError(w, v)
 		return
@@ -123,7 +124,7 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 
 func (app *application) getTaskByID(w http.ResponseWriter, r *http.Request) {
 	claims, ok := app.claimsFromContext(r.Context())
-	if !ok || claims.UserID < 1 {
+	if !ok {
 		app.unauthorized(w)
 		return
 	}
