@@ -18,7 +18,6 @@ type UserClaims struct {
 
 var (
 	ErrInvalidSigningMethod = errors.New("jwt: invalid signing method")
-	ErrNoUser               = errors.New("jwt: could not parse user data from token")
 )
 
 func NewJWTService(secret []byte) *JWTService {

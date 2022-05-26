@@ -13,7 +13,7 @@ type JWTService struct {
 
 func (j *JWTService) Parse(tokenStr string) (*jwt.UserClaims, error) {
 	if tokenStr == "invalid" {
-		return nil, errors.New("Invalid token")
+		return nil, errors.New("invalid token")
 	}
 
 	claims := jwt.UserClaims{

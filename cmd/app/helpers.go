@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -13,8 +12,6 @@ import (
 	"github.com/pafirmin/go-todo/internal/jwt"
 	"github.com/pafirmin/go-todo/internal/validator"
 )
-
-var errNoUser = errors.New("no user in request context")
 
 type responsePayload map[string]interface{}
 

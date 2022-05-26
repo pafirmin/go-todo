@@ -9,13 +9,12 @@ var (
 	emailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
 
-
 type Validator struct {
 	Errors map[string]string
 }
 
 type Validatable interface {
-	Validate (*Validator)
+	Validate(*Validator)
 }
 
 func New() *Validator {
@@ -54,11 +53,8 @@ func PermittedValue[T comparable](value T, permittedValues ...T) bool {
 
 func ValidDate(value string) bool {
 	_, err := time.Parse(time.RFC3339, value)
-	if err != nil {
-		return false
-	}
 
-	return true
+	return err == nil
 }
 
 func IsEmail(value string) bool {
