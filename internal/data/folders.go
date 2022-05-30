@@ -41,6 +41,26 @@ func (d *UpdateFolderDTO) Validate(v *validator.Validator) {
 	}
 }
 
+func (m FolderModel) Insert(userId int, dto *CreateFolderDTO) (*Folder, error) {
+	stmt := `INSERT INTO folders (name, user_id, created)
+	VALUES($1, $2, DEFAULT)
+	RETURNING *`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	f := &Folder{}
+	args := []interface{}{dto.Name, userId}
+
+	err := m.DB.QueryRowContext(ctx, stmt, args...).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
 func (m FolderModel) GetByID(id int) (*Folder, error) {
 	stmt := `SELECT id, name, user_id, created
 	FROM folders
@@ -97,25 +117,6 @@ func (m FolderModel) GetByUser(userId int, filters Filters) ([]*Folder, MetaData
 	metadata := CalculateMetadata(totalRecords, filters.Page, filters.PageSize)
 
 	return folders, metadata, nil
-}
-
-func (m FolderModel) Insert(userId int, dto *CreateFolderDTO) (*Folder, error) {
-	stmt := `INSERT INTO folders (name, user_id, created)
-	VALUES($1, $2, DEFAULT)
-	RETURNING *`
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	f := &Folder{}
-
-	err := m.DB.QueryRowContext(ctx, stmt, dto.Name, userId).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
 }
 
 func (m FolderModel) Update(id int, dto *UpdateFolderDTO) (*Folder, error) {

@@ -67,8 +67,9 @@ func (m TaskModel) Insert(folderID int, dto *CreateTaskDTO) (*Task, error) {
 	defer cancel()
 
 	t := &Task{}
+	args := []interface{}{dto.Title, dto.Description, dto.Priority, dto.Due, folderID}
 
-	row := m.DB.QueryRowContext(ctx, stmt, dto.Title, dto.Description, dto.Priority, dto.Due, folderID)
+	row := m.DB.QueryRowContext(ctx, stmt, args...)
 	err := row.Scan(
 		&t.ID,
 		&t.Title,
@@ -168,8 +169,9 @@ func (m TaskModel) Update(id int, dto *UpdateTaskDTO) (*Task, error) {
 	defer cancel()
 
 	t := &Task{}
+	args := []interface{}{dto.Title, dto.Description, dto.Priority, dto.Due, dto.FolderID, id}
 
-	row := m.DB.QueryRowContext(ctx, stmt, dto.Title, dto.Description, dto.Priority, dto.Due, dto.FolderID, id)
+	row := m.DB.QueryRowContext(ctx, stmt, args...)
 	err := row.Scan(
 		&t.ID,
 		&t.Title,

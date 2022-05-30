@@ -28,7 +28,7 @@ func (app *application) serve() error {
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		s := <-quit
 
-		app.infoLog.Printf("shutting down server, signal: %s", s.String())
+		app.infoLog.Printf("gracefully shutting down server, signal: %s", s.String())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		defer cancel()
