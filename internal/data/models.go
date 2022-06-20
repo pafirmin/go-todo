@@ -15,7 +15,7 @@ type Models struct {
 	Users interface {
 		Insert(*CreateUserDTO) (*User, error)
 		Get(int) (*User, error)
-		Authenticate(*Credentials) (int, error)
+		Authenticate(*Credentials) (*User, error)
 	}
 	Folders interface {
 		Insert(int, *CreateFolderDTO) (*Folder, error)

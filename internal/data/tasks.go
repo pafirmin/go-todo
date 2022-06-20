@@ -22,7 +22,7 @@ type Task struct {
 	Due         time.Time `json:"due"`
 	Complete    bool      `json:"complete"`
 	Created     time.Time `json:"created"`
-	FolderID    int       `json:"folderId"`
+	FolderID    int       `json:"folder_id"`
 }
 
 type CreateTaskDTO struct {
@@ -115,7 +115,7 @@ func (m TaskModel) GetByID(id int) (*Task, error) {
 func (m TaskModel) GetByFolder(folderId int, priority string, filters Filters) ([]*Task, MetaData, error) {
 	stmt := fmt.Sprintf(`SELECT count(*) OVER(), * FROM tasks
 		WHERE tasks.folder_id = $1
-		AND tasks.priority LIKE $2 OR $2 = ''
+		AND (tasks.priority LIKE $2 OR $2 = '')
 		ORDER BY %s %s, id ASC
 		LIMIT $3 OFFSET $4`, filters.SortColumn(), filters.SortDirection())
 

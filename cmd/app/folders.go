@@ -188,8 +188,7 @@ func (app *application) removeFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = app.models.Folders.Delete(id)
-	if err != nil {
+	if _, err = app.models.Folders.Delete(id); err != nil {
 		app.serverError(w, err)
 		return
 	}

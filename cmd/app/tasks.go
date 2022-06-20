@@ -215,7 +215,7 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			switch {
 			case errors.Is(err, data.ErrNoRecord):
-				app.clientError(w, http.StatusBadRequest, "target folder not found")
+				app.badRequest(w)
 			default:
 				app.serverError(w, err)
 			}
@@ -223,7 +223,7 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if f.UserID != claims.UserID {
-			app.clientError(w, http.StatusBadRequest, "insufficient privileges to access target folder")
+			app.forbidden(w)
 			return
 		}
 	}

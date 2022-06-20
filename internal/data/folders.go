@@ -17,7 +17,7 @@ type FolderModel struct {
 type Folder struct {
 	ID      int       `json:"id"`
 	Name    string    `json:"name"`
-	UserID  int       `json:"userId"`
+	UserID  int       `json:"user_id"`
 	Created time.Time `json:"created"`
 }
 

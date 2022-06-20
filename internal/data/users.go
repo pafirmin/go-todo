@@ -38,7 +38,7 @@ type Credentials struct {
 }
 
 func (m UserModel) Get(id int) (*User, error) {
-	stmt := `SELECT * FROM users WHERE users.id = $1`
+	stmt := `SELECT id, email, hashed_password, created FROM users WHERE users.id = $1`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -82,31 +82,30 @@ func (m UserModel) Insert(dto *CreateUserDTO) (*User, error) {
 	return &u, nil
 }
 
-func (m UserModel) Authenticate(creds *Credentials) (int, error) {
-	var id int
-	var hashedPassword []byte
-
-	stmt := `SELECT id, hashed_password FROM users WHERE email = $1`
+func (m UserModel) Authenticate(creds *Credentials) (*User, error) {
+	stmt := `SELECT id, email, hashed_password, created FROM users WHERE email = $1`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	u := User{}
+
 	row := m.DB.QueryRowContext(ctx, stmt, creds.Email)
-	if err := row.Scan(&id, &hashedPassword); err != nil {
+	if err := row.Scan(&u.ID, &u.Email, &u.HashedPassword, &u.Created); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, ErrInvalidCredentials
+			return nil, ErrInvalidCredentials
 		} else {
-			return 0, err
+			return nil, err
 		}
 	}
 
-	err := bcrypt.CompareHashAndPassword(hashedPassword, []byte(creds.Password))
+	err := bcrypt.CompareHashAndPassword([]byte(u.HashedPassword), []byte(creds.Password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return 0, ErrInvalidCredentials
+			return nil, ErrInvalidCredentials
 		} else {
-			return 0, err
+			return nil, err
 		}
 	}
-	return id, nil
+	return &u, nil
 }

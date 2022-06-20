@@ -19,20 +19,20 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := app.models.Users.Authenticate(creds)
+	u, err := app.models.Users.Authenticate(creds)
 	if err != nil {
 		app.unauthorized(w)
 		return
 	}
 
 	exp := time.Now().Add(24 * time.Hour)
-	token, err := app.jwtService.Sign(id, exp)
+	token, err := app.jwtService.Sign(u.ID, exp)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, responsePayload{"token": token})
+	app.writeJSON(w, http.StatusOK, responsePayload{"access_token": token, "user": u})
 }
 
 func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
