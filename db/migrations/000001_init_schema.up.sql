@@ -16,9 +16,8 @@ CREATE TABLE IF NOT EXISTS "tasks" (
   "id" serial PRIMARY KEY,
   "title" VARCHAR ( 255 ) NOT NULL,
   "description" TEXT,
-  "priority" VARCHAR NOT NULL CHECK(description IN ('low', 'medium', 'high')) DEFAULT ('low'),
-  "due" TIMESTAMP,
-  "complete" BOOLEAN NOT NULL DEFAULT (false),
+  "status" VARCHAR NOT NULL CHECK(description IN ('cancelled', 'important')) DEFAULT ('low'),
+  "datetime" TIMESTAMP,
   "created" TIMESTAMP NOT NULL DEFAULT (now()),
   "folder_id" bigint NOT NULL
 );

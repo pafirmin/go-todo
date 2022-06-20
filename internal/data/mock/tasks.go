@@ -10,11 +10,10 @@ var mockTask = &data.Task{
 	ID:          1,
 	Title:       "Test",
 	Description: "Test",
-	Priority:    "low",
+	Datetime:    time.Now(),
+	Status:      "low",
 	FolderID:    1,
-	Complete:    false,
 	Created:     time.Now(),
-	Due:         time.Now().Add(7 * 24 * time.Hour),
 }
 
 type TaskModel struct{}
@@ -23,7 +22,7 @@ func (t TaskModel) Insert(id int, dto *data.CreateTaskDTO) (*data.Task, error) {
 	return mockTask, nil
 }
 
-func (t TaskModel) GetByFolder(id int, priority string, filters data.Filters) ([]*data.Task, data.MetaData, error) {
+func (t TaskModel) GetByFolder(id int, status string, filters data.Filters) ([]*data.Task, data.MetaData, error) {
 	return []*data.Task{mockTask}, data.MetaData{}, nil
 }
 

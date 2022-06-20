@@ -59,15 +59,15 @@ func TestCreateTask(t *testing.T) {
 		dto      *data.CreateTaskDTO
 	}{
 		{"Valid request", "/folders/1/tasks", http.StatusCreated, []byte("Test"), "123",
-			&data.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().Format(time.RFC3339)}},
+			&data.CreateTaskDTO{Title: "Test", Description: "Test", Datetime: time.Now().Format(time.RFC3339)}},
 		{"Invalid user", "/folders/1/tasks", http.StatusUnauthorized, nil, "invalid",
-			&data.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().Format(time.RFC3339)}},
+			&data.CreateTaskDTO{Title: "Test", Description: "Test", Datetime: time.Now().Format(time.RFC3339)}},
 		{"Forbidden user", "/folders/1/tasks", http.StatusForbidden, nil, "456",
-			&data.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().Format(time.RFC3339)}},
+			&data.CreateTaskDTO{Title: "Test", Description: "Test", Datetime: time.Now().Format(time.RFC3339)}},
 		{"Trailing slash", "/folders/1/tasks/", http.StatusNotFound, nil, "123",
-			&data.CreateTaskDTO{Title: "Test", Description: "Test", Priority: "low", Due: time.Now().Format(time.RFC3339)}},
+			&data.CreateTaskDTO{Title: "Test", Description: "Test", Datetime: time.Now().Format(time.RFC3339)}},
 		{"Invalid body", "/folders/1/tasks", http.StatusBadRequest, nil, "123",
-			&data.CreateTaskDTO{Title: "", Description: "Test", Priority: "low", Due: time.Now().Format(time.RFC3339)}},
+			&data.CreateTaskDTO{Title: "", Description: "Test", Datetime: time.Now().Format(time.RFC3339)}},
 	}
 	rm := getRequestMaker(app.routes(), "POST", t)
 

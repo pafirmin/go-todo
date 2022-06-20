@@ -94,13 +94,13 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 	}
 
 	var input struct {
-		Priority string
+		Status string
 		data.Filters
 	}
 
 	qs := r.URL.Query()
 
-	input.Priority = app.stringFromQuery(qs, "priority", "")
+	input.Status = app.stringFromQuery(qs, "status", "")
 	input.Filters.Sort = app.stringFromQuery(qs, "sort", "id")
 	input.Filters.Page = app.intFromQuery(qs, "page", 1)
 	input.Filters.PageSize = app.intFromQuery(qs, "page_size", 20)
@@ -113,7 +113,7 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	tasks, metadata, err := app.models.Tasks.GetByFolder(f.ID, input.Priority, input.Filters)
+	tasks, metadata, err := app.models.Tasks.GetByFolder(f.ID, input.Status, input.Filters)
 	if err != nil {
 		app.serverError(w, err)
 		return

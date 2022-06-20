@@ -28,11 +28,11 @@ func (m UserModel) Get(id int) (*data.User, error) {
 	}
 }
 
-func (m UserModel) Authenticate(cred *data.Credentials) (int, error) {
+func (m UserModel) Authenticate(cred *data.Credentials) (*data.User, error) {
 	switch cred.Email {
 	case "mock@example.com":
-		return 1, nil
+		return mockUser, nil
 	default:
-		return 0, data.ErrInvalidCredentials
+		return nil, data.ErrInvalidCredentials
 	}
 }
