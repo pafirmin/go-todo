@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/pafirmin/go-todo/internal/data"
@@ -94,17 +95,21 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 	}
 
 	var input struct {
-		Status string
+		Status  string
+		MinDate time.Time
+		MaxDate time.Time
 		data.Filters
 	}
 
 	qs := r.URL.Query()
 
 	input.Status = app.stringFromQuery(qs, "status", "")
-	input.Filters.Sort = app.stringFromQuery(qs, "sort", "id")
+	input.MinDate = app.dateFromQuery(qs, "min_date", time.Time{})
+	input.MaxDate = app.dateFromQuery(qs, "max_date", time.Time{})
+	input.Filters.Sort = app.stringFromQuery(qs, "sort", "datetime")
 	input.Filters.Page = app.intFromQuery(qs, "page", 1)
 	input.Filters.PageSize = app.intFromQuery(qs, "page_size", 20)
-	input.Filters.SortSafeList = []string{"id", "due", "created", "-id", "-due", "-created"}
+	input.Filters.SortSafeList = []string{"id", "due", "created", "datetime", "-id", "-due", "-created", "-datetime"}
 
 	v := validator.New()
 
@@ -113,7 +118,7 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	tasks, metadata, err := app.models.Tasks.GetByFolder(f.ID, input.Status, input.Filters)
+	tasks, metadata, err := app.models.Tasks.GetByFolder(f.ID, input.Status, input.MinDate, input.MaxDate, input.Filters)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -192,7 +197,7 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if f.ID != claims.UserID {
+	if f.UserID != claims.UserID {
 		app.forbidden(w)
 		return
 	}

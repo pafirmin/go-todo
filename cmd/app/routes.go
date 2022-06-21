@@ -20,7 +20,7 @@ func (app *application) routes() http.Handler {
 	s.HandleFunc("/auth/login", app.login).Methods(http.MethodPost)
 
 	// User handlers
-	s.Handle("/users", authMiddleware.ThenFunc(app.createUser)).Methods(http.MethodPost)
+	s.HandleFunc("/users", app.createUser).Methods(http.MethodPost)
 	s.Handle("/users/me", authMiddleware.ThenFunc(app.getUserByID)).Methods(http.MethodGet)
 
 	// Folder handlers

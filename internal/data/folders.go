@@ -19,31 +19,30 @@ type Folder struct {
 	Name    string    `json:"name"`
 	UserID  int       `json:"user_id"`
 	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
 }
 
 type CreateFolderDTO struct {
-	Name string `json:"name" validate:"required,min=1,max=30"`
+	Name string `json:"name"`
 }
 
 func (d *CreateFolderDTO) Validate(v *validator.Validator) {
-	v.Check(d.Name != "", "name", "folder name must be provided")
-	v.Check(len(d.Name) < 40, "name", "must be shorter than 40 characters")
+	v.ValidLength("name", d.Name, 1, 30)
 }
 
 type UpdateFolderDTO struct {
-	Name *string `json:"name" validate:"required,min=1,max=30,omitempty"`
+	Name *string `json:"name"`
 }
 
 func (d *UpdateFolderDTO) Validate(v *validator.Validator) {
 	if d.Name != nil {
-		v.Check(*d.Name == "", "name", "folder name must be provided")
-		v.Check(len(*d.Name) < 40, "name", "must be shorter than 40 characters")
+		v.ValidLength("name", *d.Name, 1, 30)
 	}
 }
 
 func (m FolderModel) Insert(userId int, dto *CreateFolderDTO) (*Folder, error) {
-	stmt := `INSERT INTO folders (name, user_id, created)
-	VALUES($1, $2, DEFAULT)
+	stmt := `INSERT INTO folders (name, user_id, created, updated)
+	VALUES($1, $2, DEFAULT, DEFAULT)
 	RETURNING *`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -52,7 +51,7 @@ func (m FolderModel) Insert(userId int, dto *CreateFolderDTO) (*Folder, error) {
 	f := &Folder{}
 	args := []interface{}{dto.Name, userId}
 
-	err := m.DB.QueryRowContext(ctx, stmt, args...).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
+	err := m.DB.QueryRowContext(ctx, stmt, args...).Scan(&f.ID, &f.Name, &f.Created, &f.Updated, &f.UserID)
 
 	if err != nil {
 		return nil, err
@@ -62,7 +61,7 @@ func (m FolderModel) Insert(userId int, dto *CreateFolderDTO) (*Folder, error) {
 }
 
 func (m FolderModel) GetByID(id int) (*Folder, error) {
-	stmt := `SELECT id, name, user_id, created
+	stmt := `SELECT id, name, created, updated, user_id
 	FROM folders
 	WHERE folders.id = $1`
 
@@ -71,7 +70,7 @@ func (m FolderModel) GetByID(id int) (*Folder, error) {
 
 	f := &Folder{}
 
-	err := m.DB.QueryRowContext(ctx, stmt, id).Scan(&f.ID, &f.Name, &f.UserID, &f.Created)
+	err := m.DB.QueryRowContext(ctx, stmt, id).Scan(&f.ID, &f.Name, &f.Created, &f.Updated, &f.UserID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -83,7 +82,7 @@ func (m FolderModel) GetByID(id int) (*Folder, error) {
 }
 
 func (m FolderModel) GetByUser(userId int, filters Filters) ([]*Folder, MetaData, error) {
-	stmt := fmt.Sprintf(`SELECT count(*) OVER(), id, name, user_id, created
+	stmt := fmt.Sprintf(`SELECT count(*) OVER(), id, name, created, updated, user_id
 	FROM folders
 	WHERE folders.user_id = $1
 	ORDER BY %s %s, id ASC
@@ -107,7 +106,7 @@ func (m FolderModel) GetByUser(userId int, filters Filters) ([]*Folder, MetaData
 
 	for rows.Next() {
 		f := Folder{}
-		err := rows.Scan(&totalRecords, &f.ID, &f.Name, &f.UserID, &f.Created)
+		err := rows.Scan(&totalRecords, &f.ID, &f.Name, &f.Created, &f.Updated, &f.UserID)
 		if err != nil {
 			return nil, MetaData{}, err
 		}
@@ -121,7 +120,7 @@ func (m FolderModel) GetByUser(userId int, filters Filters) ([]*Folder, MetaData
 
 func (m FolderModel) Update(id int, dto *UpdateFolderDTO) (*Folder, error) {
 	stmt := `UPDATE folders
-	SET name = COALESCE($1, name)
+	SET name = COALESCE($1, name), updated = now()
 	WHERE folders.id = $2
 	RETURNING *
 	`
@@ -131,7 +130,7 @@ func (m FolderModel) Update(id int, dto *UpdateFolderDTO) (*Folder, error) {
 
 	f := &Folder{}
 
-	err := m.DB.QueryRowContext(ctx, stmt, dto.Name, id).Scan(&f.Name)
+	err := m.DB.QueryRowContext(ctx, stmt, dto.Name, id).Scan(&f.ID, &f.Name, &f.Created, &f.Updated, &f.UserID)
 
 	if err != nil {
 		return nil, err

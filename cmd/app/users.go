@@ -15,7 +15,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
-		app.unauthorized(w)
+		app.serverError(w, err)
 		return
 	}
 
@@ -73,7 +73,13 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 
 	u, err := app.models.Users.Insert(dto)
 	if err != nil {
-		app.serverError(w, err)
+		switch {
+		case errors.Is(err, data.ErrDuplicateEmail):
+			v.AddError("email", "email already in use")
+			app.validationError(w, v)
+		default:
+			app.serverError(w, err)
+		}
 		return
 	}
 

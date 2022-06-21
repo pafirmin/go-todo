@@ -66,7 +66,7 @@ func TestCreateTask(t *testing.T) {
 			&data.CreateTaskDTO{Title: "Test", Description: "Test", Datetime: time.Now().Format(time.RFC3339)}},
 		{"Trailing slash", "/folders/1/tasks/", http.StatusNotFound, nil, "123",
 			&data.CreateTaskDTO{Title: "Test", Description: "Test", Datetime: time.Now().Format(time.RFC3339)}},
-		{"Invalid body", "/folders/1/tasks", http.StatusBadRequest, nil, "123",
+		{"Invalid body", "/folders/1/tasks", http.StatusUnprocessableEntity, nil, "123",
 			&data.CreateTaskDTO{Title: "", Description: "Test", Datetime: time.Now().Format(time.RFC3339)}},
 	}
 	rm := getRequestMaker(app.routes(), "POST", t)

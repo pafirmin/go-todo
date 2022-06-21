@@ -27,7 +27,7 @@ func (f *Filters) Validate(v *validator.Validator) {
 	v.Check(f.Page < 1_000_000, "page", "must be less than 1,000,000")
 	v.Check(f.PageSize > 0, "page_size", "must be greater than 0")
 	v.Check(f.PageSize <= 1000, "page_size", "must be 1000 or lower")
-	v.Check(validator.PermittedValue(f.Sort, f.SortSafeList...), "sort", "invalid sort key")
+	v.PermittedValue("sort", f.Sort, f.SortSafeList...)
 }
 
 func CalculateMetadata(totalRecords, page, pageSize int) MetaData {

@@ -3,6 +3,7 @@ package data
 import (
 	"database/sql"
 	"errors"
+	"time"
 )
 
 var (
@@ -26,7 +27,7 @@ type Models struct {
 	}
 	Tasks interface {
 		Insert(int, *CreateTaskDTO) (*Task, error)
-		GetByFolder(int, string, Filters) ([]*Task, MetaData, error)
+		GetByFolder(int, string, time.Time, time.Time, Filters) ([]*Task, MetaData, error)
 		GetByID(int) (*Task, error)
 		Update(int, *UpdateTaskDTO) (*Task, error)
 		Delete(int) (int, error)

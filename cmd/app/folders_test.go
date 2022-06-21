@@ -94,7 +94,7 @@ func TestCreateFolder(t *testing.T) {
 			&data.CreateFolderDTO{Name: "Test"}},
 		{"Trailing slash", "/users/me/folders/", http.StatusNotFound, nil, "123",
 			&data.CreateFolderDTO{Name: "Test"}},
-		{"Invalid body", "/users/me/folders", http.StatusBadRequest, nil, "123",
+		{"Invalid body", "/users/me/folders", http.StatusUnprocessableEntity, nil, "123",
 			&data.CreateFolderDTO{Name: ""}},
 	}
 	rm := getRequestMaker(app.routes(), "POST", t)

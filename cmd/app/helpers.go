@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"runtime/debug"
 	"strconv"
+	"time"
 
 	"github.com/pafirmin/go-todo/internal/jwt"
 	"github.com/pafirmin/go-todo/internal/validator"
@@ -23,15 +24,15 @@ func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	app.errorLog.Output(2, trace)
 
-	app.errorResponse(w, http.StatusInternalServerError, "Inernal server error")
+	app.errorResponse(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
+}
+
+func (app *application) validationError(w http.ResponseWriter, v *validator.Validator) {
+	app.writeJSON(w, http.StatusUnprocessableEntity, responsePayload{"message": "validation failed", "errors": v.Errors})
 }
 
 func (app *application) badRequest(w http.ResponseWriter) {
 	app.errorResponse(w, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
-}
-
-func (app *application) validationError(w http.ResponseWriter, v *validator.Validator) {
-	app.errorResponse(w, http.StatusBadRequest, v.Errors)
 }
 
 func (app *application) notFound(w http.ResponseWriter) {
@@ -93,6 +94,15 @@ func (app *application) intFromQuery(qs url.Values, key string, defaultValue int
 	}
 
 	return i
+}
+
+func (app *application) dateFromQuery(qs url.Values, key string, defaultValue time.Time) time.Time {
+	t, err := time.Parse("2006-01-02", qs.Get(key))
+	if err != nil {
+		return defaultValue
+	}
+
+	return t
 }
 
 func Version() string {

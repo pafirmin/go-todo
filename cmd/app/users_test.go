@@ -21,13 +21,13 @@ func TestCreateUser(t *testing.T) {
 		dto      *data.CreateUserDTO
 	}{
 		{"Valid body", "/users", http.StatusCreated, []byte("mock@example.com"), "123",
-			&data.CreateUserDTO{Email: "mock@example.com", Password: "Test1234"}},
-		{"Invalid email", "/users", http.StatusBadRequest, nil, "123",
-			&data.CreateUserDTO{Email: "invalid", Password: "Test1234"}},
-		{"Invalid password", "/users", http.StatusBadRequest, nil, "123",
-			&data.CreateUserDTO{Email: "mock@example.com", Password: "Test123"}},
+			&data.CreateUserDTO{Email: "mock@example.com", FirstName: "Test", LastName: "McTest", Password: "Test1234"}},
+		{"Invalid email", "/users", http.StatusUnprocessableEntity, nil, "123",
+			&data.CreateUserDTO{Email: "not_an_email", FirstName: "Test", LastName: "McTest", Password: "Test1234"}},
+		{"Invalid password", "/users", http.StatusUnprocessableEntity, nil, "123",
+			&data.CreateUserDTO{Email: "mock@example.com", FirstName: "Test", LastName: "McTest", Password: "Test123"}},
 		{"Trailing slash", "/users/", http.StatusNotFound, nil, "123",
-			&data.CreateUserDTO{Email: "mock@example.com", Password: "Test1234"}},
+			&data.CreateUserDTO{Email: "mock@example.com", FirstName: "Test", LastName: "McTest", Password: "Test1234"}},
 	}
 	rm := getRequestMaker(app.routes(), "POST", t)
 
