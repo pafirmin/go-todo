@@ -41,8 +41,8 @@ type UpdateTaskDTO struct {
 	Title       *string `json:"title,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Datetime    *string `json:"datetime,omitempty"`
-	Status      *string `json:"status"`
-	FolderID    *int    `json:"folderId,omitempty"`
+	Status      *string `json:"status,omitempty"`
+	FolderID    *int    `json:"folder_id,omitempty"`
 }
 
 func (d *UpdateTaskDTO) Validate(v *validator.Validator) {
@@ -115,9 +115,9 @@ func (m TaskModel) GetByID(id int) (*Task, error) {
 }
 
 func (m TaskModel) GetByFolder(
-	folderId int,
+	folderID int,
 	status string,
-	minDate time.Time,
+	minDate,
 	maxDate time.Time,
 	filters Filters,
 ) ([]*Task, MetaData, error) {
@@ -142,7 +142,7 @@ func (m TaskModel) GetByFolder(
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	args := []interface{}{folderId, status, filters.Limit(), filters.Offset()}
+	args := []interface{}{folderID, status, filters.Limit(), filters.Offset()}
 
 	rows, err := m.DB.QueryContext(ctx, stmt, args...)
 	if err != nil {
@@ -181,11 +181,11 @@ func (m TaskModel) GetByFolder(
 func (m TaskModel) Update(id int, dto *UpdateTaskDTO) (*Task, error) {
 	stmt := `UPDATE tasks
 	SET title = COALESCE($1, title),
-	description = COALESCE($2, description),
-	status = COALESCE($3, status),
-	datetime = COALESCE($4, datetime),
-	folder_id = COALESCE($5, folder_id),
-	updated = now()
+		description = COALESCE($2, description),
+		status = COALESCE($3, status),
+		datetime = COALESCE($4, datetime),
+		folder_id = COALESCE($5, folder_id),
+		updated = now()
 	WHERE tasks.id = $6
 	RETURNING *
 	`

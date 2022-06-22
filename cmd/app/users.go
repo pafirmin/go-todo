@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -13,9 +12,9 @@ import (
 func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	creds := &data.Credentials{}
 
-	err := json.NewDecoder(r.Body).Decode(creds)
+	err := app.readJSON(w, r, creds)
 	if err != nil {
-		app.serverError(w, err)
+		app.badRequest(w, err.Error())
 		return
 	}
 
@@ -59,15 +58,15 @@ func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
 func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 	dto := &data.CreateUserDTO{}
 
-	err := json.NewDecoder(r.Body).Decode(dto)
+	err := app.readJSON(w, r, dto)
 	if err != nil {
-		app.serverError(w, err)
+		app.badRequest(w, err.Error())
 		return
 	}
 
 	v := validator.New()
 	if v.Exec(dto); !v.Valid() {
-		app.validationError(w, v)
+		app.validationFailed(w, v)
 		return
 	}
 
@@ -76,7 +75,7 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, data.ErrDuplicateEmail):
 			v.AddError("email", "email already in use")
-			app.validationError(w, v)
+			app.validationFailed(w, v)
 		default:
 			app.serverError(w, err)
 		}

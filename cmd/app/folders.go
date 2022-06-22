@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -19,15 +18,15 @@ func (app *application) createFolder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dto := &data.CreateFolderDTO{}
-	err := json.NewDecoder(r.Body).Decode(dto)
+	err := app.readJSON(w, r, dto)
 	if err != nil {
-		app.serverError(w, err)
+		app.badRequest(w, err.Error())
 		return
 	}
 
 	v := validator.New()
 	if v.Exec(dto); !v.Valid() {
-		app.validationError(w, v)
+		app.validationFailed(w, v)
 		return
 	}
 
@@ -60,7 +59,7 @@ func (app *application) getFoldersByUser(w http.ResponseWriter, r *http.Request)
 
 	v := validator.New()
 	if v.Exec(&input.Filters); !v.Valid() {
-		app.validationError(w, v)
+		app.validationFailed(w, v)
 		return
 	}
 
@@ -83,7 +82,7 @@ func (app *application) getFolderByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.badRequest(w)
+		app.notFound(w)
 		return
 	}
 
@@ -116,7 +115,7 @@ func (app *application) updateFolder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.badRequest(w)
+		app.notFound(w)
 		return
 	}
 
@@ -137,15 +136,15 @@ func (app *application) updateFolder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dto := &data.UpdateFolderDTO{}
-	err = json.NewDecoder(r.Body).Decode(dto)
+	err = app.readJSON(w, r, dto)
 	if err != nil {
-		app.serverError(w, err)
+		app.badRequest(w, err.Error())
 		return
 	}
 
 	v := validator.New()
 	if v.Exec(dto); !v.Valid() {
-		app.validationError(w, v)
+		app.validationFailed(w, v)
 		return
 	}
 
@@ -168,7 +167,7 @@ func (app *application) removeFolder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.badRequest(w)
+		app.notFound(w)
 		return
 	}
 

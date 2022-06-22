@@ -40,7 +40,7 @@ func (d *UpdateFolderDTO) Validate(v *validator.Validator) {
 	}
 }
 
-func (m FolderModel) Insert(userId int, dto *CreateFolderDTO) (*Folder, error) {
+func (m FolderModel) Insert(userID int, dto *CreateFolderDTO) (*Folder, error) {
 	stmt := `INSERT INTO folders (name, user_id, created, updated)
 	VALUES($1, $2, DEFAULT, DEFAULT)
 	RETURNING *`
@@ -49,7 +49,7 @@ func (m FolderModel) Insert(userId int, dto *CreateFolderDTO) (*Folder, error) {
 	defer cancel()
 
 	f := &Folder{}
-	args := []interface{}{dto.Name, userId}
+	args := []interface{}{dto.Name, userID}
 
 	err := m.DB.QueryRowContext(ctx, stmt, args...).Scan(&f.ID, &f.Name, &f.Created, &f.Updated, &f.UserID)
 
@@ -81,7 +81,7 @@ func (m FolderModel) GetByID(id int) (*Folder, error) {
 	return f, nil
 }
 
-func (m FolderModel) GetByUser(userId int, filters Filters) ([]*Folder, MetaData, error) {
+func (m FolderModel) GetByUser(userID int, filters Filters) ([]*Folder, MetaData, error) {
 	stmt := fmt.Sprintf(`SELECT count(*) OVER(), id, name, created, updated, user_id
 	FROM folders
 	WHERE folders.user_id = $1
@@ -92,7 +92,7 @@ func (m FolderModel) GetByUser(userId int, filters Filters) ([]*Folder, MetaData
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	args := []interface{}{userId, filters.Limit(), filters.Offset()}
+	args := []interface{}{userID, filters.Limit(), filters.Offset()}
 
 	rows, err := m.DB.QueryContext(ctx, stmt, args...)
 	if err != nil {

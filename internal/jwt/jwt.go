@@ -7,12 +7,12 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-type JWTService struct {
+type Service struct {
 	Secret []byte
 }
 
 type UserClaims struct {
-	UserID int `json:"userId"`
+	UserID int `json:"user_id"`
 	jwt.StandardClaims
 }
 
@@ -20,13 +20,13 @@ var (
 	ErrInvalidSigningMethod = errors.New("jwt: invalid signing method")
 )
 
-func NewJWTService(secret []byte) *JWTService {
-	return &JWTService{
+func NewService(secret []byte) *Service {
+	return &Service{
 		Secret: secret,
 	}
 }
 
-func (j *JWTService) Sign(id int, expires time.Time) (string, error) {
+func (j *Service) Sign(id int, expires time.Time) (string, error) {
 	claims := &UserClaims{
 		UserID: id,
 		StandardClaims: jwt.StandardClaims{
@@ -43,7 +43,7 @@ func (j *JWTService) Sign(id int, expires time.Time) (string, error) {
 	return ret, nil
 }
 
-func (j *JWTService) Parse(tokenStr string) (*UserClaims, error) {
+func (j *Service) Parse(tokenStr string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidSigningMethod

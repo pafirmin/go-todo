@@ -17,7 +17,7 @@ confirm:
 run/app:
 	go run ./cmd/app -db-address=${DB_ADDR} -jwt-secret=${JWT_SECRET}
 
-## run/bin execute application binary
+## run/bin: execute application binary
 .PHONY: run/bin
 run/bin:
 	./bin/app -db-address=${DB_ADDR} -jwt-secret=${JWT_SECRET}

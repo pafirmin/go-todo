@@ -15,7 +15,7 @@ var mockFolder = &data.Folder{
 
 type FolderModel struct{}
 
-func (f FolderModel) Insert(userId int, dto *data.CreateFolderDTO) (*data.Folder, error) {
+func (f FolderModel) Insert(userID int, dto *data.CreateFolderDTO) (*data.Folder, error) {
 	return mockFolder, nil
 }
 

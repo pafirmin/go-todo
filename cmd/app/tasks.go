@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -22,7 +21,7 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.badRequest(w)
+		app.notFound(w)
 		return
 	}
 
@@ -43,15 +42,15 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dto := &data.CreateTaskDTO{}
-	err = json.NewDecoder(r.Body).Decode(dto)
+	err = app.readJSON(w, r, dto)
 	if err != nil {
-		app.serverError(w, err)
+		app.badRequest(w, err.Error())
 		return
 	}
 
 	v := validator.New()
 	if v.Exec(dto); !v.Valid() {
-		app.validationError(w, v)
+		app.validationFailed(w, v)
 		return
 	}
 
@@ -74,7 +73,7 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.badRequest(w)
+		app.notFound(w)
 		return
 	}
 
@@ -114,7 +113,7 @@ func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request)
 	v := validator.New()
 
 	if v.Exec(&input.Filters); !v.Valid() {
-		app.validationError(w, v)
+		app.validationFailed(w, v)
 		return
 	}
 
@@ -137,7 +136,7 @@ func (app *application) getTaskByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.badRequest(w)
+		app.notFound(w)
 		return
 	}
 
@@ -176,7 +175,7 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.badRequest(w)
+		app.notFound(w)
 		return
 	}
 
@@ -203,15 +202,15 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dto := &data.UpdateTaskDTO{}
-	err = json.NewDecoder(r.Body).Decode(dto)
+	err = app.readJSON(w, r, dto)
 	if err != nil {
-		app.serverError(w, err)
+		app.badRequest(w, err.Error())
 		return
 	}
 
 	v := validator.New()
 	if v.Exec(dto); !v.Valid() {
-		app.validationError(w, v)
+		app.validationFailed(w, v)
 		return
 	}
 
@@ -220,7 +219,7 @@ func (app *application) updateTask(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			switch {
 			case errors.Is(err, data.ErrNoRecord):
-				app.badRequest(w)
+				app.notFound(w)
 			default:
 				app.serverError(w, err)
 			}
@@ -252,7 +251,7 @@ func (app *application) removeTask(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		app.badRequest(w)
+		app.notFound(w)
 		return
 	}
 

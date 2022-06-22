@@ -54,7 +54,7 @@ func main() {
 
 	flag.Parse()
 
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	infoLog := log.New(os.Stdout, "INFO\t", log.LstdFlags)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	db, err := openDB(cfg.dbAddr)
@@ -71,7 +71,7 @@ func main() {
 		errorLog:   errorLog,
 		infoLog:    infoLog,
 		models:     data.NewModels(db),
-		jwtService: jwt.NewJWTService([]byte(secret)),
+		jwtService: jwt.NewService([]byte(secret)),
 	}
 
 	err = app.serve()
