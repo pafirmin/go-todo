@@ -27,6 +27,7 @@ type Models struct {
 	}
 	Tasks interface {
 		Insert(int, *CreateTaskDTO) (*Task, error)
+		GetByUser(int, []string, string, time.Time, time.Time, Filters) ([]*Task, MetaData, error)
 		GetByFolder(int, string, time.Time, time.Time, Filters) ([]*Task, MetaData, error)
 		GetByID(int) (*Task, error)
 		Update(int, *UpdateTaskDTO) (*Task, error)

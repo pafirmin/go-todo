@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/pafirmin/go-todo/internal/validator"
 )
 
@@ -112,6 +113,76 @@ func (m TaskModel) GetByID(id int) (*Task, error) {
 	}
 
 	return t, nil
+}
+
+func (m TaskModel) GetByUser(
+	userID int,
+	folderIDs []string,
+	status string,
+	minDate,
+	maxDate time.Time,
+	filters Filters,
+) ([]*Task, MetaData, error) {
+	var minDateStmt string
+	var maxDateStmt string
+
+	if !minDate.IsZero() {
+		minDateStmt = fmt.Sprintf("AND DATE_TRUNC('day', tasks.datetime) >= '%s'", minDate.Format("2006-01-02"))
+	}
+	if !maxDate.IsZero() {
+		maxDateStmt = fmt.Sprintf("AND DATE_TRUNC('day', tasks.datetime) <= '%s'", maxDate.Format("2006-01-02"))
+	}
+
+	stmt := fmt.Sprintf(`SELECT count(*) OVER(),
+	tasks.id, tasks.title, tasks.description, tasks.status, tasks.datetime, tasks.created, tasks.updated, tasks.folder_id
+	FROM tasks
+	INNER JOIN folders ON folders.id = tasks.folder_id 
+	WHERE folders.user_id = $1
+	AND (tasks.folder_id = ANY ($2::int[]) OR $2 = '{}')
+	AND (tasks.status LIKE $3 OR $3 = '')
+	%s
+	%s
+	ORDER BY tasks.%s %s, tasks.id ASC
+	LIMIT $4 OFFSET $5`, minDateStmt, maxDateStmt, filters.SortColumn(), filters.SortDirection())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	args := []interface{}{userID, pq.Array(folderIDs), status, filters.Limit(), filters.Offset()}
+
+	rows, err := m.DB.QueryContext(ctx, stmt, args...)
+	if err != nil {
+		return nil, MetaData{}, err
+	}
+
+	defer rows.Close()
+
+	totalRecords := 0
+	tasks := []*Task{}
+
+	for rows.Next() {
+		t := &Task{}
+		err = rows.Scan(
+			&totalRecords,
+			&t.ID,
+			&t.Title,
+			&t.Description,
+			&t.Status,
+			&t.Datetime,
+			&t.Created,
+			&t.Updated,
+			&t.FolderID,
+		)
+
+		if err != nil {
+			return nil, MetaData{}, err
+		}
+		tasks = append(tasks, t)
+	}
+
+	metadata := CalculateMetadata(totalRecords, filters.Page, filters.PageSize)
+
+	return tasks, metadata, nil
 }
 
 func (m TaskModel) GetByFolder(

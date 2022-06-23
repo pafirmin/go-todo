@@ -130,6 +130,16 @@ func (app *application) stringFromQuery(qs url.Values, key string, defaultValue 
 	return s
 }
 
+func (app *application) sliceFromQuery(qs url.Values, key string, defaultValue []string) []string {
+	s := qs[key]
+
+	if len(s) == 0 {
+		return defaultValue
+	}
+
+	return qs[key]
+}
+
 func (app *application) intFromQuery(qs url.Values, key string, defaultValue int) int {
 	s := qs.Get(key)
 

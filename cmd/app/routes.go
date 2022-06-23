@@ -33,6 +33,7 @@ func (app *application) routes() http.Handler {
 	// Task handlers
 	s.Handle("/folders/{id:[0-9]+}/tasks", authMiddleware.ThenFunc(app.createTask)).Methods(http.MethodPost)
 	s.Handle("/folders/{id:[0-9]+}/tasks", authMiddleware.ThenFunc(app.getTasksByFolder)).Methods(http.MethodGet)
+	s.Handle("/tasks", authMiddleware.ThenFunc(app.getTasksByUser)).Methods(http.MethodGet)
 	s.Handle("/tasks/{id:[0-9]+}", authMiddleware.ThenFunc(app.getTaskByID)).Methods(http.MethodGet)
 	s.Handle("/tasks/{id:[0-9]+}", authMiddleware.ThenFunc(app.updateTask)).Methods(http.MethodPatch)
 	s.Handle("/tasks/{id:[0-9]+}", authMiddleware.ThenFunc(app.removeTask)).Methods(http.MethodDelete)

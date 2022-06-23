@@ -63,9 +63,57 @@ func (app *application) createTask(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusCreated, responsePayload{"task": t})
 }
 
+func (app *application) getTasksByUser(w http.ResponseWriter, r *http.Request) {
+	claims, ok := app.claimsFromContext(r.Context())
+	if !ok {
+		app.unauthorized(w)
+		return
+	}
+
+	var input struct {
+		FolderIDs []string
+		Status    string
+		MinDate   time.Time
+		MaxDate   time.Time
+		data.Filters
+	}
+
+	qs := r.URL.Query()
+
+	input.FolderIDs = app.sliceFromQuery(qs, "folder_id[]", []string{})
+	input.Status = app.stringFromQuery(qs, "status", "")
+	input.MinDate = app.dateFromQuery(qs, "min_date", time.Time{})
+	input.MaxDate = app.dateFromQuery(qs, "max_date", time.Time{})
+	input.Filters.Sort = app.stringFromQuery(qs, "sort", "datetime")
+	input.Filters.Page = app.intFromQuery(qs, "page", 1)
+	input.Filters.PageSize = app.intFromQuery(qs, "page_size", 20)
+	input.Filters.SortSafeList = []string{"id", "due", "created", "datetime", "-id", "-due", "-created", "-datetime"}
+
+	v := validator.New()
+
+	for _, id := range input.FolderIDs {
+		if _, err := strconv.Atoi(id); err != nil {
+			v.AddError("folder_id", "must be an integer")
+		}
+	}
+
+	if v.Exec(&input.Filters); !v.Valid() {
+		app.validationFailed(w, v)
+		return
+	}
+
+	tasks, metadata, err := app.models.Tasks.GetByUser(claims.UserID, input.FolderIDs, input.Status, input.MinDate, input.MaxDate, input.Filters)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusOK, responsePayload{"metadata": metadata, "tasks": tasks})
+}
+
 func (app *application) getTasksByFolder(w http.ResponseWriter, r *http.Request) {
 	claims, ok := app.claimsFromContext(r.Context())
-	if !ok || claims.UserID < 1 {
+	if !ok {
 		app.unauthorized(w)
 		return
 	}
