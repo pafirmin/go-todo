@@ -19,7 +19,7 @@ User=paul
 Group=paul
 EnvironmentFile=/etc/environment
 WorkingDirectory=/home/paul/apps/go-todo
-ExecStart=/home/paul/apps/go-todo/bin/linux_amd64/app -port=8081 -db-dsn=${GREENLIGHT_DB_DSN} -env=production
+ExecStart=/home/paul/apps/go-todo/bin/linux_amd64/app -port=8081 -db-address=${GREENLIGHT_DB_DSN} -env=production
 
 # Automatically restart the service after a 5-second wait if it exits with a non-zero 
 # exit code. If it restarts more than 5 times in 600 seconds, then the rate limit we
