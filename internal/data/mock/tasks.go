@@ -35,6 +35,17 @@ func (t TaskModel) GetByID(id int) (*data.Task, error) {
 	}
 }
 
+func (t TaskModel) GetByUser(
+	userID int,
+	folderIDs []string,
+	status string,
+	minDate,
+	maxDate time.Time,
+	filters data.Filters,
+) ([]*data.Task, data.MetaData, error) {
+	return []*data.Task{mockTask}, data.MetaData{}, nil
+}
+
 func (t TaskModel) Update(id int, dto *data.UpdateTaskDTO) (*data.Task, error) {
 	return mockTask, nil
 }
