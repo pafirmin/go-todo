@@ -22,14 +22,14 @@ production/connect:
 ## production/deploy/api: deploy the api to production
 .PHONY: production/deploy/api
 production/deploy/api:
-	rsync -P ./bin/linux_amd64/api ${REMOTE_USER}@${production_host_ip}:${REMOTE_PATH}
+	rsync -P ./bin/linux_amd64/app ${REMOTE_USER}@${production_host_ip}:${REMOTE_PATH}
 	rsync -rP --delete ./db/migrations ${REMOTE_USER}@${production_host_ip}:${REMOTE_PATH}
-	rsync -P ./remote/production/api.service ${REMOTE_USER}@${production_host_ip}:${REMOTE_PATH}
-	ssh -t greenlight@${production_host_ip} '\
-		migrate -path ~/db/migrations -database $$GO_TODO_DB_ADDR up \
-		&& sudo mv ~/api.service /etc/systemd/system/ \
-		&& sudo systemctl enable api \
-		&& sudo systemctl restart api \
+	rsync -P ./remote/production/go-todo.service ${REMOTE_USER}@${production_host_ip}:${REMOTE_PATH}
+	ssh -t ${REMOTE_USER}@${production_host_ip} '\
+		migrate -path ${REMOTE_PATH}/migrations -database $$GO_TODO_DB_ADDR up \
+		&& sudo mv ${REMOTE_PATH}/go-todo.service /etc/systemd/system/ \
+		&& sudo systemctl enable go-todo \
+		&& sudo systemctl restart go-todo \
 	'
 
 # ================================================================ #
