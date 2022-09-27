@@ -19,18 +19,22 @@ production_host_ip = ${HOST_IP}
 production/connect:
 	ssh ${REMOTE_USER}@${production_host_ip}
 
-## production/deploy/api: deploy the api to production
-.PHONY: production/deploy/api
-production/deploy/api:
+## production/deploy: deploy the api to production
+.PHONY: production/deploy
+production/deploy:
 	rsync -P ./bin/linux_amd64/app ${REMOTE_USER}@${production_host_ip}:${REMOTE_PATH}
 	rsync -rP --delete ./db/migrations ${REMOTE_USER}@${production_host_ip}:${REMOTE_PATH}
 	rsync -P ./remote/production/go-todo.service ${REMOTE_USER}@${production_host_ip}:${REMOTE_PATH}
 	ssh -t ${REMOTE_USER}@${production_host_ip} '\
-		migrate -path ${REMOTE_PATH}/migrations -database $$GO_TODO_DB_ADDR up \
-		&& sudo mv ${REMOTE_PATH}/go-todo.service /etc/systemd/system/ \
+		sudo mv ${REMOTE_PATH}/go-todo.service /etc/systemd/system/ \
 		&& sudo systemctl enable go-todo \
 		&& sudo systemctl restart go-todo \
 	'
+
+.PHONY: production/migrate
+production/migrate:
+	ssh -t ${REMOTE_USER}@${production_host_ip} 'migrate -path ${REMOTE_PATH}/migrations -database $$GO_TODO_DB_ADDR up'
+
 
 # ================================================================ #
 # DEVELOPMENT
