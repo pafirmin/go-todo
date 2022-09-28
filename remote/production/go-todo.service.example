@@ -12,14 +12,14 @@ StartLimitIntervalSec=600
 StartLimitBurst=5
 
 [Service]
-# Execute the API binary as the greenlight user, loading the environment variables from
-# /etc/environment and using the working directory /home/greenlight.
+# Execute the API binary as the specified user, loading the environment variables from
+# /etc/environment and using the working directory /home/go-todo.
 Type=exec
 User=user
 Group=user
 EnvironmentFile=/etc/environment
-WorkingDirectory=~/go-todo
-ExecStart=~/go-todo/app -port=8081 -db-address=${GO_TODO_DB_ADDR} -jwt-secret=${GO_TODO_JWT_SECRET} -env=production
+WorkingDirectory=/home/go-todo
+ExecStart=/home/go-todo/app -port=8081 -db-address=${GO_TODO_DB_ADDR} -jwt-secret=${GO_TODO_JWT_SECRET} -env=production
 
 # Automatically restart the service after a 5-second wait if it exits with a non-zero 
 # exit code. If it restarts more than 5 times in 600 seconds, then the rate limit we
