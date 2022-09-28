@@ -1,0 +1,5 @@
+export DEV_DB_ADDR=postgresql://postgres@localhost:5432/go-todo?sslmode=disable
+export DEV_JWT_SECRET=s3cr3t123
+export PROD_HOST_IP=1.1.1.1
+export REMOTE_USER=user
+export REMOTE_PATH=~/apps/go-todo
