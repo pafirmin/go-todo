@@ -1,4 +1,4 @@
-include .envrc
+include .makerc
 
 # ================================================================ #
 # HELPERS
@@ -12,20 +12,18 @@ confirm:
 # PRODUCTION
 # ==================================================================================== #
 
-production_host_ip = ${HOST_IP}
-
 ## production/connect: connect to the production server
 .PHONY: production/connect
 production/connect:
-	ssh ${REMOTE_USER}@${production_host_ip}
+	ssh ${REMOTE_USER}@${PROD_HOST_IP}
 
 ## production/deploy: deploy the api to production
 .PHONY: production/deploy
 production/deploy:
-	rsync -P ./bin/linux_amd64/app ${REMOTE_USER}@${production_host_ip}:${REMOTE_PATH}
-	rsync -rP --delete ./db/migrations ${REMOTE_USER}@${production_host_ip}:${REMOTE_PATH}
-	rsync -P ./remote/production/go-todo.service ${REMOTE_USER}@${production_host_ip}:${REMOTE_PATH}
-	ssh -t ${REMOTE_USER}@${production_host_ip} '\
+	rsync -P ./bin/linux_amd64/app ${REMOTE_USER}@${PROD_HOST_IP}:${REMOTE_PATH}
+	rsync -rP --delete ./db/migrations ${REMOTE_USER}@${PROD_HOST_IP}:${REMOTE_PATH}
+	rsync -P ./remote/production/go-todo.service ${REMOTE_USER}@${PROD_HOST_IP}:${REMOTE_PATH}
+	ssh -t ${REMOTE_USER}@${PROD_HOST_IP} '\
 		sudo mv ${REMOTE_PATH}/go-todo.service /etc/systemd/system/ \
 		&& sudo systemctl enable go-todo \
 		&& sudo systemctl restart go-todo \
@@ -33,7 +31,7 @@ production/deploy:
 
 .PHONY: production/migrate
 production/migrate:
-	ssh -t ${REMOTE_USER}@${production_host_ip} 'migrate -path ${REMOTE_PATH}/migrations -database $$GO_TODO_DB_ADDR up'
+	ssh -t ${REMOTE_USER}@${PROD_HOST_IP} 'migrate -path ${REMOTE_PATH}/migrations -database $$GO_TODO_DEV_DB_ADDR up'
 
 
 # ================================================================ #
@@ -43,18 +41,18 @@ production/migrate:
 ## run/app: run the application
 .PHONY: run/app
 run/app:
-	go run ./cmd/app -db-address=${DB_ADDR} -jwt-secret=${JWT_SECRET}
+	go run ./cmd/app -db-address=${DEV_DB_ADDR} -jwt-secret=${JWT_SECRET}
 
 ## run/bin: execute application binary
 .PHONY: run/bin
 run/bin:
-	./bin/app -db-address=${DB_ADDR} -jwt-secret=${JWT_SECRET}
+	./bin/app -db-address=${DEV_DB_ADDR} -jwt-secret=${JWT_SECRET}
 
 ## db/migrations/up: run all database migrations
 .PHONY: db/migrations/up
 db/migrations/up: confirm
 	@echo 'Running up migrations...'
-	migrate -path ./db/migrations -database ${DB_ADDR} up
+	migrate -path ./db/migrations -database ${DEV_DB_ADDR} up
 
 ## db/migrations/new: create a new pair of blank migration files
 .PHONY: db/migrations/new
