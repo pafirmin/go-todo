@@ -34,6 +34,23 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusOK, responsePayload{"access_token": token, "user": u})
 }
 
+func (app *application) guestLogin(w http.ResponseWriter, r *http.Request) {
+	u, err := app.models.Users.GetByEmail("guest@example.com")
+	if err != nil {
+		app.unauthorized(w)
+		return
+	}
+
+	exp := time.Now().Add(24 * time.Hour)
+	token, err := app.jwtService.Sign(u.ID, exp)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusOK, responsePayload{"access_token": token, "user": u})
+}
+
 func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
 	claims, ok := app.claimsFromContext(r.Context())
 	if !ok || claims.UserID < 1 {

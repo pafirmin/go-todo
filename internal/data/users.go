@@ -61,6 +61,28 @@ func (m UserModel) Get(id int) (*User, error) {
 		}
 		return nil, err
 	}
+
+	return u, nil
+}
+
+func (m UserModel) GetByEmail(email string) (*User, error) {
+	stmt := `SELECT id, email, first_name, last_name, hashed_password, created, updated FROM users WHERE users.email = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	u := &User{}
+
+	rows := m.DB.QueryRowContext(ctx, stmt, email)
+
+	err := rows.Scan(&u.ID, &u.Email, &u.FirstName, &u.LastName, &u.HashedPassword, &u.Created, &u.Updated)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		}
+		return nil, err
+	}
+
 	return u, nil
 }
 

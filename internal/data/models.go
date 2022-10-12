@@ -16,6 +16,7 @@ type Models struct {
 	Users interface {
 		Insert(*CreateUserDTO) (*User, error)
 		Get(int) (*User, error)
+		GetByEmail(string) (*User, error)
 		Authenticate(*Credentials) (*User, error)
 	}
 	Folders interface {
