@@ -1,5 +1,5 @@
 # go-todo
-Classic to-do/scheduler REST API written in Go, featuring graceful shutdown, rate limiter. An example front end implementation can be found here:
+Classic to-do/scheduler REST API written in Go. An example front end implementation can be found here:
 http://github.com/pafirmin/calendar-app
 
 # Running the prject
