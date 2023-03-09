@@ -19,6 +19,7 @@ func newTestApplication(t *testing.T) *application {
 		Folders: mock.FolderModel{},
 		Users:   mock.UserModel{},
 		Tasks:   mock.TaskModel{},
+		Tokens:  mock.TokenModel{},
 	}
 	return &application{
 		errorLog:   log.New(io.Discard, "", 0),

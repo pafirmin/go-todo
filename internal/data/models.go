@@ -18,6 +18,7 @@ type Models struct {
 		Get(int) (*User, error)
 		GetByEmail(string) (*User, error)
 		Authenticate(*Credentials) (*User, error)
+		GetByToken(string, string) (*User, error)
 	}
 	Folders interface {
 		Insert(int, *CreateFolderDTO) (*Folder, error)
@@ -34,6 +35,12 @@ type Models struct {
 		Update(int, *UpdateTaskDTO) (*Task, error)
 		Delete(int) (int, error)
 	}
+	Tokens interface {
+		New(int, time.Time, string) (*Token, error)
+		Insert(*Token) error
+		DeleteForUser(string, int) error
+		Delete(string) error
+	}
 }
 
 func NewModels(db *sql.DB) Models {
@@ -41,5 +48,6 @@ func NewModels(db *sql.DB) Models {
 		Users:   UserModel{DB: db},
 		Folders: FolderModel{DB: db},
 		Tasks:   TaskModel{DB: db},
+		Tokens:  TokenModel{DB: db},
 	}
 }

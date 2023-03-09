@@ -40,3 +40,7 @@ func (m UserModel) Authenticate(cred *data.Credentials) (*data.User, error) {
 		return nil, data.ErrInvalidCredentials
 	}
 }
+
+func (m UserModel) GetByToken(scope string, tokenText string) (*data.User, error) {
+	return mockUser, nil
+}

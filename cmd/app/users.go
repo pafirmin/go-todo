@@ -3,53 +3,10 @@ package main
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/pafirmin/go-todo/internal/data"
 	"github.com/pafirmin/go-todo/internal/validator"
 )
-
-func (app *application) login(w http.ResponseWriter, r *http.Request) {
-	creds := &data.Credentials{}
-
-	err := app.readJSON(w, r, creds)
-	if err != nil {
-		app.badRequest(w, err.Error())
-		return
-	}
-
-	u, err := app.models.Users.Authenticate(creds)
-	if err != nil {
-		app.unauthorized(w)
-		return
-	}
-
-	exp := time.Now().Add(24 * time.Hour)
-	token, err := app.jwtService.Sign(u.ID, exp)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	app.writeJSON(w, http.StatusOK, responsePayload{"access_token": token, "user": u})
-}
-
-func (app *application) guestLogin(w http.ResponseWriter, r *http.Request) {
-	u, err := app.models.Users.GetByEmail("guest@example.com")
-	if err != nil {
-		app.unauthorized(w)
-		return
-	}
-
-	exp := time.Now().Add(24 * time.Hour)
-	token, err := app.jwtService.Sign(u.ID, exp)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	app.writeJSON(w, http.StatusOK, responsePayload{"access_token": token, "user": u})
-}
 
 func (app *application) getUserByID(w http.ResponseWriter, r *http.Request) {
 	claims, ok := app.claimsFromContext(r.Context())

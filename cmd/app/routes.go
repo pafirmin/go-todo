@@ -19,6 +19,9 @@ func (app *application) routes() http.Handler {
 	// Auth handlers
 	s.HandleFunc("/auth/login", app.login).Methods(http.MethodPost)
 	s.HandleFunc("/auth/guest", app.guestLogin).Methods(http.MethodGet)
+	s.HandleFunc("/auth/refresh-token", app.refreshToken).Methods(http.MethodGet)
+	s.HandleFunc("/auth/logout", app.logout).Methods(http.MethodGet)
+	s.Handle("/auth/logout-global", authMiddleware.ThenFunc(app.logoutEverywhere)).Methods(http.MethodGet)
 
 	// User handlers
 	s.HandleFunc("/users", app.createUser).Methods(http.MethodPost)

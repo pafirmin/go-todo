@@ -50,7 +50,7 @@ func (v *Validator) ValidDatetime(key, value string) {
 }
 
 func (v *Validator) ValidDate(key, value string) {
-	if _, err := time.Parse("2006-02-01", value); err != nil {
+	if _, err := time.Parse("2006-01-02", value); err != nil {
 		v.AddError(key, "must be in format dd-MM-yyyy")
 	}
 }
