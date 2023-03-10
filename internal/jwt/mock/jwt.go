@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	goJwt "github.com/golang-jwt/jwt/v5"
 	"github.com/pafirmin/go-todo/internal/jwt"
 )
 
@@ -19,7 +20,7 @@ func (j *JWTService) Parse(tokenStr string) (*jwt.UserClaims, error) {
 	claims := jwt.UserClaims{
 		UserID: 1,
 	}
-	claims.ExpiresAt = time.Now().Add(24 * time.Hour).UnixMicro()
+	claims.ExpiresAt = goJwt.NewNumericDate(time.Now().Add(24 * time.Hour))
 	if tokenStr == "123" {
 		claims.UserID = 1
 	} else {
