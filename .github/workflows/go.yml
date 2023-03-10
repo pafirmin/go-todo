@@ -1,10 +1,10 @@
-name: Audit and deploy
+name: Audit
 
 on:
   push:
-    branches: [main]
+    branches: master
   pull_request:
-    branches: [main]
+    branches: master
 
 jobs:
 
@@ -29,12 +29,6 @@ jobs:
 
     - name: Run staticcheck
       run: staticcheck ./...
-      
-    - name: Install golint
-      run: go install golang.org/x/lint/golint@latest
-
-    - name: Run golint
-      run: golint ./...
 
     - name: Run tests
       run: go test -race -vet=off ./...
