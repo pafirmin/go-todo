@@ -31,7 +31,7 @@ production/deploy:
 
 .PHONY: production/migrate
 production/migrate:
-	ssh -t ${REMOTE_USER}@${PROD_HOST_IP} 'migrate -path ${REMOTE_PATH}/migrations -database $$GO_TODO_DEV_DB_ADDR up'
+	ssh -t ${REMOTE_USER}@${PROD_HOST_IP} 'migrate -path ${REMOTE_PATH}/migrations -database $$GO_TODO_DB_ADDR up'
 
 
 # ================================================================ #
