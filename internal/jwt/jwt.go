@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type Service struct {
@@ -13,7 +13,7 @@ type Service struct {
 
 type UserClaims struct {
 	UserID int `json:"user_id"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 var (
@@ -29,8 +29,8 @@ func NewService(secret []byte) *Service {
 func (j *Service) Sign(id int, expires time.Time) (string, error) {
 	claims := &UserClaims{
 		UserID: id,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expires.Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expires),
 		},
 	}
 
