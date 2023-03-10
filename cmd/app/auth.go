@@ -32,6 +32,11 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 
 	exp = time.Now().Add(7 * 24 * time.Hour)
 	refreshToken, err := app.models.Tokens.New(u.ID, exp, data.ScopeRefresh)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
 	cookie := &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken.Plaintext,
